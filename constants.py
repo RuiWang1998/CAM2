@@ -21,6 +21,10 @@ NIG_DIR = 'night'
 DAY_DIR = 'day'
 
 BATCH_SIZE = 10
+IMG_INPUT_LEN = 100
+NUM_CHANNEL = 3
+LATENT_DIM = 500
+PROCESSOR_OUT = 200
 
 if platform.system() == 'Linux':
     DIR = SOURCE_LINUX + SECONDARY_DIR
