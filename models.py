@@ -36,7 +36,6 @@ class ImageProcessor(nn.Module):
         out = self.out(out)
 
         return out
-
 class Generator(nn.Module):
     def __init__(self):
         super(Generator, self).__init__()

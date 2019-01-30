@@ -5,7 +5,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 
-from constants import DIR, DAY_DIR, NIG_DIR, BATCH_SIZE, IMG_INPUT_LEN, NUM_CHANNEL
+from constants import DIR, DAY_DIR, NIG_DIR, BATCH_SIZE, IMG_INPUT_LEN, NUM_CHANNEL, device
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 

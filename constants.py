@@ -4,8 +4,9 @@ import glob
 import os
 import numpy as np
 
-SEED = 1127
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
+SEED = 1127
 def seed_everything(seed=SEED):
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -25,6 +26,8 @@ IMG_INPUT_LEN = 100
 NUM_CHANNEL = 3
 LATENT_DIM = 500
 PROCESSOR_OUT = 200
+EPOCHS = 5
+LR = 1e-4
 
 if platform.system() == 'Linux':
     DIR = SOURCE_LINUX + SECONDARY_DIR
