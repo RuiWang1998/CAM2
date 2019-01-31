@@ -25,8 +25,8 @@ NUM_CHANNEL = 3
 LATENT_DIM = 600
 PROCESSOR_OUT = 200
 EPOCHS = 20000 
-LR_G = 1e-4
-LR_D = 1e-4
+LR_G = 1e-3
+LR_D = 1e-3
 BOTTLENEK = 400
 
 G_PATH = 'data/night2day/model/generator'
