@@ -1,6 +1,4 @@
-import torch
 import torch.nn as nn
-from constants import IMG_INPUT_LEN, LATENT_DIM, NUM_CHANNEL, PROCESSOR_OUT, BOTTLENEK
 
 class ImageProcessor(nn.Module):
     def __init__(self):
@@ -26,7 +24,7 @@ class ImageProcessor(nn.Module):
         )
 
         self.out = nn.Sequential(
-            nn.Linear(507, BOTTLENEK//2),
+            nn.Linear(192, BOTTLENEK//2),
             nn.LeakyReLU(0.2),
             nn.Linear(BOTTLENEK//2, BOTTLENEK//2),
             nn.LeakyReLU(0.2),
@@ -39,6 +37,29 @@ class ImageProcessor(nn.Module):
         out = self.out(out)
 
         return out
+      
+class ImagePreProcessor(nn.Module):
+    def __init__(self):
+        super(ImagePreProcessor, self).__init__()
+
+        def conv_layer(input_channel, output_channel):
+            return nn.Sequential(
+                nn.Conv2d(input_channel, output_channel, 3, 2, 1),
+                nn.BatchNorm2d(output_channel),
+                nn.ReLU()
+            )
+
+        self.conv1 = conv_layer(NUM_CHANNEL, 16)
+        self.conv2 = conv_layer(16, 32)
+
+        self.model = nn.Sequential(
+            self.conv1,
+            self.conv2,
+        )
+
+    def forward(self, x):
+
+        return self.model(x)
 
 class Generator(nn.Module):
     def __init__(self):
@@ -76,19 +97,32 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         self.adv_layer = nn.Sequential(
-            nn.Linear(PROCESSOR_OUT * 2, BOTTLENEK // 2),
+            nn.Linear(192, BOTTLENEK // 2),
             nn.ReLU(),
             nn.Linear(BOTTLENEK // 2, BOTTLENEK // 2),
             nn.ReLU(),
             nn.Linear(BOTTLENEK // 2, 1),
             nn.Sigmoid())
 
-        self.imageProcessor = ImageProcessor()
+        self.imageProcessor = ImagePreProcessor()
+        
+        def conv_layer(input_channel, output_channel):
+            return nn.Sequential(
+                nn.Conv2d(input_channel, output_channel, 3, 2, 1),
+                nn.BatchNorm2d(output_channel),
+                nn.ReLU()
+            )
+          
+        self.conv1 = conv_layer(64, 16)
+        self.conv2 = conv_layer(16, 3)
+        
 
     def forward(self, img1, img2):
         out1 = self.imageProcessor(img1)
         out2 = self.imageProcessor(img2)
         out = torch.cat((out1, out2), dim=1)
-        validity = self.adv_layer(out)
+        out = self.conv1(out)
+        out = self.conv2(out)
+        validity = self.adv_layer(out.view(img1.shape[0], -1))
 
         return validity
