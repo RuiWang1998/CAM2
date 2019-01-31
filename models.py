@@ -26,7 +26,7 @@ class ImageProcessor(nn.Module):
         )
 
         self.out = nn.Sequential(
-            nn.Linear(300, BOTTLENEK//2),
+            nn.Linear(192, BOTTLENEK//2),
             nn.LeakyReLU(0.2),
             nn.Linear(BOTTLENEK//2, BOTTLENEK//2),
             nn.LeakyReLU(0.2),
@@ -99,7 +99,7 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         self.adv_layer = nn.Sequential(
-            nn.Linear(192, BOTTLENEK // 2),
+            nn.Linear(300, BOTTLENEK // 2),
             nn.ReLU(),
             nn.Linear(BOTTLENEK // 2, BOTTLENEK // 2),
             nn.ReLU(),
