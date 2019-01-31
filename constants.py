@@ -19,9 +19,7 @@ def seed_everything(seed=SEED):
 
 seed_everything()
 
-SOURCE_WINDOWS = 'C:/'
-SOURCE_LINUX = '/mnt/c/'
-DIR = 'night2day/Train/'
+DIR = 'data/night2day/Train/'
 NIG_DIR = 'night'
 DAY_DIR = 'day'
 
@@ -34,5 +32,5 @@ EPOCHS = 5
 LR = 1e-4
 BOTTLENEK = 512
 
-G_PATH = 'night2day/model/generator'
-D_PATH = 'night2day/model/discriminator'
+G_PATH = 'CAM2/night2day/model/generator'
+D_PATH = 'CAM2/night2day/model/discriminator'
