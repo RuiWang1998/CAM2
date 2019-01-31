@@ -115,15 +115,13 @@ class Discriminator(nn.Module):
                 nn.ReLU()
             )
           
-        self.conv1 = conv_layer(64, 16)
-        self.conv2 = conv_layer(16, 3)
+        self.conv1 = conv_layer(64, 128)
+        self.conv2 = conv_layer(128, 3)
         
 
     def forward(self, img1, img2):
         out1 = self.imageProcessor(img1)
         out2 = self.imageProcessor(img2)
-        print(out1.shape)
-        print(out2.shape)
         out = torch.cat((out1, out2), dim=1)
         out = self.conv1(out)
         out = self.conv2(out)
