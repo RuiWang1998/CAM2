@@ -38,7 +38,7 @@ for epoch in range(2000):
         d_loss += discriminator_train_step(generator, images_day, images_nig, discriminator, batch_size_idx, minimax_loss, d_optimizer)
 
         g_loss += generator_train_step(generator, images_nig, discriminator, batch_size_idx, minimax_loss, g_optimizer)
-    if epoch % 3 == 0: visualize(generator, images_nig)
+    if epoch % 3 == 0: pass # visualize(generator, images_nig)
     print("Epoch: {}| Generator loss:{:5f}| Discriminator:{:5f}".format(epoch, g_loss, d_loss))
     if epoch % 200 == 0:
         torch.save(generator.state_dict(), G_PATH)

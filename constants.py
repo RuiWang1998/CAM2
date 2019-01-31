@@ -28,5 +28,5 @@ EPOCHS = 5
 LR = 1e-4
 BOTTLENEK = 512
 
-G_PATH = 'CAM2/night2day/model/generator'
-D_PATH = 'CAM2/night2day/model/discriminator'
+G_PATH = 'data/night2day/model/generator'
+D_PATH = 'data/night2day/model/discriminator'
