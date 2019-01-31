@@ -6,16 +6,17 @@ from function import generator_train_step, discriminator_train_step
 from data_load import day_loader, nig_loader
 from main import d_optimizer, g_optimizer
 
-generator = Generator().to(device)
-generator.load_state_dict(torch.load(G_PATH))
-
-discriminator = Discriminator().to(device)
-discriminator.load_state_dict(torch.load(D_PATH))
-
-minimax_loss = torch.nn.BCELoss()
 
 if __name__ == '__main__':
 
+    generator = Generator().to(device)
+    generator.load_state_dict(torch.load(G_PATH))
+
+    discriminator = Discriminator().to(device)
+    discriminator.load_state_dict(torch.load(D_PATH))
+
+    minimax_loss = torch.nn.BCELoss()
+    
     for epoch in range(2000):
 
         d_loss = 0
