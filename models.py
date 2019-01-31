@@ -1,4 +1,6 @@
+import torch
 import torch.nn as nn
+from constants import IMG_INPUT_LEN, LATENT_DIM, NUM_CHANNEL, PROCESSOR_OUT, BOTTLENEK
 
 class ImageProcessor(nn.Module):
     def __init__(self):
