@@ -5,16 +5,17 @@ from models import Generator, Discriminator
 from constants import D_PATH, G_PATH, device, EPOCHS
 from function import generator_train_step, discriminator_train_step
 from data_load import day_loader, nig_loader
-from main import d_optimizer, g_optimizer
 
 
 if __name__ == '__main__':
 
     generator = Generator().to(device)
     generator.load_state_dict(torch.load(G_PATH))
+    g_optimizer = torch.optim.Adam(generator.parameters(), lr=LR_G)
 
     discriminator = Discriminator().to(device)
     discriminator.load_state_dict(torch.load(D_PATH))
+    d_optimizer = torch.optim.Adam(discriminator.parameters(), lr=LR_D)
 
     minimax_loss = torch.nn.BCELoss()
 
