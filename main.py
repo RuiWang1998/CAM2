@@ -8,19 +8,17 @@ from data_load import day_loader, nig_loader
 from models import Generator, Discriminator
 from function import generator_train_step, discriminator_train_step, visualize
 
-#%%
-# The models
-generator = Generator().to(device)
-g_optimizer = torch.optim.Adam(generator.parameters(), lr=LR_G)
-
-discriminator = Discriminator().to(device)
-d_optimizer = torch.optim.Adam(discriminator.parameters(), lr=LR_D)
-
-# Loss function
-minimax_loss = nn.BCELoss()
-
-#%%
 if __name__ == '__main__':
+            
+    # The models   
+    generator = Generator().to(device)
+    g_optimizer = torch.optim.Adam(generator.parameters(), lr=LR_G)
+
+    discriminator = Discriminator().to(device)
+    d_optimizer = torch.optim.Adam(discriminator.parameters(), lr=LR_D)
+    
+    # Loss function
+    minimax_loss = nn.BCELoss() 
     
     for epoch in range(EPOCHS):
 
