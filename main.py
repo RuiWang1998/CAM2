@@ -38,5 +38,7 @@ if __name__ == '__main__':
         if epoch % 200 == 0:
             torch.save(generator.state_dict(), G_PATH)
             torch.save(discriminator.state_dict(), D_PATH)
+    torch.save(generator.state_dict(), G_PATH)
+    torch.save(discriminator.state_dict(), D_PATH)
 
 #%%
