@@ -1,4 +1,5 @@
 import torch
+import time
 
 from models import Generator, Discriminator
 from constants import D_PATH, G_PATH, device
@@ -16,7 +17,7 @@ if __name__ == '__main__':
     discriminator.load_state_dict(torch.load(D_PATH))
 
     minimax_loss = torch.nn.BCELoss()
-    
+
     for epoch in range(2000):
 
         d_loss = 0
