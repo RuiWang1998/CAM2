@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import time
 
-from constants import EPOCHS, LATENT_DIM, device, LR, G_PATH, D_PATH
+from constants import EPOCHS, LATENT_DIM, device, LR_G, LR_D, G_PATH, D_PATH
 from data_load import day_loader, nig_loader
 from models import Generator, Discriminator
 from function import generator_train_step, discriminator_train_step, visualize
@@ -11,10 +11,10 @@ from function import generator_train_step, discriminator_train_step, visualize
 #%%
 # The models
 generator = Generator().to(device)
-g_optimizer = torch.optim.Adam(generator.parameters(), lr=1.2e-3)
+g_optimizer = torch.optim.Adam(generator.parameters(), lr=LR_G)
 
 discriminator = Discriminator().to(device)
-d_optimizer = torch.optim.Adam(discriminator.parameters(), lr=1e-3)
+d_optimizer = torch.optim.Adam(discriminator.parameters(), lr=LR_D)
 
 # Loss function
 minimax_loss = nn.BCELoss()
@@ -22,7 +22,7 @@ minimax_loss = nn.BCELoss()
 #%%
 if __name__ == '__main__':
     
-    for epoch in range(2000):
+    for epoch in range(EPOCHS):
 
         d_loss = 0
         g_loss = 0

@@ -20,13 +20,14 @@ NIG_DIR = 'night'
 DAY_DIR = 'day'
 
 BATCH_SIZE = 10
-IMG_INPUT_LEN = 200
+IMG_INPUT_LEN = 150
 NUM_CHANNEL = 3
 LATENT_DIM = 600
 PROCESSOR_OUT = 200
-EPOCHS = 5
-LR = 1e-4
-BOTTLENEK = 512
+EPOCHS = 20000 
+LR_G = 1.5e-3
+LR_D = 1e-3
+BOTTLENEK = 400
 
 G_PATH = 'data/night2day/model/generator'
 D_PATH = 'data/night2day/model/discriminator'
