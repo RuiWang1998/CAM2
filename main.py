@@ -6,7 +6,7 @@ import time
 from constants import EPOCHS, LATENT_DIM, device, LR_G, LR_D, G_PATH, D_PATH
 from data_load import day_loader, nig_loader
 from models import Generator, Discriminator
-from function import generator_train_step, discriminator_train_step, visualize
+from function import generator_train_step, discriminator_train_step, visualize, save
 
 if __name__ == '__main__':
             
@@ -36,10 +36,11 @@ if __name__ == '__main__':
         if epoch % 3 == 0: pass # visualize(generator, images_nig)
         print("Epoch: {}| Generator loss:{:5f}| Discriminator:{:5f}| time elapsed:{:2f}".format(epoch, g_loss, d_loss, time.time() - start_time))
         if epoch % 200 == 0:
-            torch.save(generator.state_dict(), G_PATH)
-            torch.save(discriminator.state_dict(), D_PATH)
+            save(generator, G_PATH)
+            save(discriminator, D_PATH)
+
+    save(generator, G_PATH)
+    save(discriminator, D_PATH)
             
-    torch.save(generator.state_dict(), G_PATH)
-    torch.save(discriminator.state_dict(), D_PATH)
 
 #%%

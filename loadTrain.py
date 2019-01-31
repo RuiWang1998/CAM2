@@ -3,7 +3,7 @@ import time
 
 from models import Generator, Discriminator
 from constants import D_PATH, G_PATH, device, EPOCHS, LR_D, LR_G
-from function import generator_train_step, discriminator_train_step
+from function import generator_train_step, discriminator_train_step, save
 from data_load import day_loader, nig_loader
 
 
@@ -34,9 +34,9 @@ if __name__ == '__main__':
             g_loss += generator_train_step(generator, images_nig, discriminator, batch_size_idx, minimax_loss, g_optimizer)
         if epoch % 3 == 0: pass # visualize(generator, images_nig)
         print("Epoch: {}| Generator loss:{:5f}| Discriminator:{:5f}| time elapsed:{:2f}".format(epoch, g_loss, d_loss, time.time() - start_time))
-        if epoch + 1 % 200 == 0:
-            torch.save(generator.state_dict(), G_PATH)
-            torch.save(discriminator.state_dict(), D_PATH)
+        if epoch % 200 == 0:
+            save(generator, G_PATH)
+            save(discriminator, D_PATH)
 
-    torch.save(generator.state_dict(), G_PATH)
-    torch.save(discriminator.state_dict(), D_PATH)
+    save(generator, G_PATH)
+    save(discriminator, D_PATH)

@@ -47,3 +47,5 @@ def visualize(generator, images_nig):
     image_fake = torch.squeeze(image_fake).permute(1,2,0).detach().cpu()
     plt.imshow(image_fake)
     plt.show()
+
+def save(model, path): torch.save(model.state_dict(), path)
