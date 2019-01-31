@@ -1,3 +1,7 @@
+DIR = 'night2day/Train/'
+NIG_DIR = 'night'
+DAY_DIR = 'day'
+
 import platform
 import torch
 import glob
@@ -17,19 +21,18 @@ seed_everything()
 
 SOURCE_WINDOWS = 'C:/'
 SOURCE_LINUX = '/mnt/c/'
-SECONDARY_DIR = '/New folder/Github/CAM2/data/night2day/train/'
+DIR = 'night2day/Train/'
 NIG_DIR = 'night'
 DAY_DIR = 'day'
 
 BATCH_SIZE = 10
-IMG_INPUT_LEN = 100
+IMG_INPUT_LEN = 120
 NUM_CHANNEL = 3
-LATENT_DIM = 500
+LATENT_DIM = 600
 PROCESSOR_OUT = 200
 EPOCHS = 5
 LR = 1e-4
+BOTTLENEK = 512
 
-if platform.system() == 'Linux':
-    DIR = SOURCE_LINUX + SECONDARY_DIR
-else:
-    DIR = SOURCE_WINDOWS + SECONDARY_DIR
+G_PATH = 'night2day/model/generator'
+D_PATH = 'night2day/model/discriminator'

@@ -2,9 +2,14 @@ import numpy as np
 from constants import LATENT_DIM, device
 import torch
 from torchvision.utils import make_grid
+import matplotlib.pyplot as plt
+
+from torchvision.utils import make_grid
+import matplotlib.pyplot as plt
 
 def generator_train_step(generator, images_nig, discriminator, batch_size, loss_func, optimizer):
     optimizer.zero_grad()
+    
     z = torch.randn(batch_size, LATENT_DIM).to(device)
     fake_day_images = generator(z, images_nig)
     score = discriminator(images_nig, fake_day_images)
@@ -34,12 +39,11 @@ def discriminator_train_step(generator, images_day, images_nig, discriminator, b
 
     return loss
 
-def visualize(generator):
+def visualize(generator, images_nig):
     
     generator.eval()
-    z = torch.randn(9, LATENT_DIM).to(device)
-    labels = torch.LongTensor(np.arange(9)).to(device)
-    sample_images = generator(z, labels).unsqueeze(1).cpu()
-    grid = make_grid(sample_images, nrow=2, normalize=True).detach().permute(1,2,0).numpy()
-    plt.imshow(grid)
+    z = torch.randn(1, LATENT_DIM).to(device)
+    image_fake = generator(z, torch.unsqueeze(images_nig[0], 0).to(device))
+    image_fake = torch.squeeze(image_fake).permute(1,2,0).detach().cpu()
+    plt.imshow(image_fake)
     plt.show()

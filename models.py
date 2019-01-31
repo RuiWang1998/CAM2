@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from constants import IMG_INPUT_LEN, LATENT_DIM, NUM_CHANNEL, PROCESSOR_OUT
+from constants import IMG_INPUT_LEN, LATENT_DIM, NUM_CHANNEL, PROCESSOR_OUT, BOTTLENEK
 
 class ImageProcessor(nn.Module):
     def __init__(self):
@@ -26,8 +26,11 @@ class ImageProcessor(nn.Module):
         )
 
         self.out = nn.Sequential(
-            nn.Linear(147, PROCESSOR_OUT),
-            nn.LeakyReLU(0.2))
+            nn.Linear(192, BOTTLENEK//2),
+            nn.LeakyReLU(0.2),
+            nn.Linear(BOTTLENEK//2, BOTTLENEK//2),
+            nn.LeakyReLU(0.2),
+            nn.Linear(BOTTLENEK//2, PROCESSOR_OUT))
 
     def forward(self, x):
 
@@ -36,22 +39,23 @@ class ImageProcessor(nn.Module):
         out = self.out(out)
 
         return out
+
 class Generator(nn.Module):
     def __init__(self):
         super(Generator, self).__init__()
 
         self.init_size = IMG_INPUT_LEN // 4
         self.l1 = nn.Sequential(
-            nn.Linear(LATENT_DIM + PROCESSOR_OUT, 128*self.init_size**2))
+            nn.Linear(LATENT_DIM + PROCESSOR_OUT, BOTTLENEK*self.init_size**2))
 
         self.conv_blocks = nn.Sequential(
-            nn.BatchNorm2d(128),
+            nn.BatchNorm2d(BOTTLENEK),
             nn.Upsample(scale_factor=2),
-            nn.Conv2d(128, 128, 3, stride=1, padding=1),
-            nn.BatchNorm2d(128, 0.8),
+            nn.Conv2d(BOTTLENEK, BOTTLENEK, 3, stride=1, padding=1),
+            nn.BatchNorm2d(BOTTLENEK, 0.8),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Upsample(scale_factor=2),
-            nn.Conv2d(128, 64, 3, stride=1, padding=1),
+            nn.Conv2d(BOTTLENEK, 64, 3, stride=1, padding=1),
             nn.BatchNorm2d(64, 0.8),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Conv2d(64, NUM_CHANNEL, 3, stride=1, padding=1),
@@ -63,16 +67,20 @@ class Generator(nn.Module):
     def forward(self, z, x):
         proc = self.imageProcessor(x)
         out = self.l1(torch.cat((proc, z), dim=1))
-        out = out.view(out.shape[0], 128, self.init_size, self.init_size)
+        out = out.view(out.shape[0], BOTTLENEK, self.init_size, self.init_size)
         img = self.conv_blocks(out)
-        return img
+        return img / 2 + 0.5
 
 class Discriminator(nn.Module):
     def __init__(self):
         super(Discriminator, self).__init__()
 
         self.adv_layer = nn.Sequential(
-            nn.Linear(PROCESSOR_OUT * 2, 1),
+            nn.Linear(PROCESSOR_OUT * 2, BOTTLENEK // 2),
+            nn.ReLU(),
+            nn.Linear(BOTTLENEK // 2, BOTTLENEK // 2),
+            nn.ReLU(),
+            nn.Linear(BOTTLENEK // 2, 1),
             nn.Sigmoid())
 
         self.imageProcessor = ImageProcessor()
