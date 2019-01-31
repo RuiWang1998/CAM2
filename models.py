@@ -120,10 +120,10 @@ class Discriminator(nn.Module):
         
 
     def forward(self, img1, img2):
-        print(img1.shape)
-        print(img2.shape)
         out1 = self.imageProcessor(img1)
         out2 = self.imageProcessor(img2)
+        print(out1.shape)
+        print(out2.shape)
         out = torch.cat((out1, out2), dim=1)
         out = self.conv1(out)
         out = self.conv2(out)
