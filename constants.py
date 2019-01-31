@@ -1,7 +1,3 @@
-DIR = 'night2day/Train/'
-NIG_DIR = 'night'
-DAY_DIR = 'day'
-
 import platform
 import torch
 import glob
