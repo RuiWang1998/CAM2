@@ -59,53 +59,43 @@ input_imgs = input_imgs.to(device)
 input_imgs = Variable(input_imgs.data, requires_grad=True)
 output = model(input_imgs)
 
-#%%
+#%% [markdown]
+# ## The output of the model is of shape (batch_size, num_boxes, num_classes + 5)
+# ###
+# #### For each of the bounding boxes, the first four is the spatial information of the box
+# #### and the fifth element is the confidence of this bounding box. THe rest of the output
+# #### should be the probability of each of the class that this box is predicting
+
+#%% [markdown]
+# ### this code below gives which of the boxes have a confidence level above 0.9
 confidence_mask = output[:, :, 4] > 0.9
 confidence_index = confidence_mask.nonzero()
 confidence_index = [entry[1] for entry in confidence_index]
 confidences = output[:, :, 4][0][confidence_index[0]]
 
+#%% [markdown]
+# ### Let's first try to find out what the first box predicts
+class_conf, class_pred = torch.max(output[:, confidence_index[5], 5:85], dim=1)
+classes[class_pred]
+
 #%%
-confidences.backward()
+class_conf.backward()
 
 #%%
 import matplotlib.pyplot as plt
 
 #%%
-normalizer = nn.Sequential(
-    nn.Tanh(),
-    nn.Softmax()
-)
-
-#%%
 saliency = input_imgs.grad[0].cpu().permute(1,2,0)
 
-#%%
-saliency_up = saliency * 1e7
-# saliency_normed = normalizer(saliency_up)
-saliency_normed = (saliency_up - saliency_up.min())/(saliency_up.max() - saliency_up.min()) - 0.3
-plt.imshow(saliency_normed)
+#%% [markdown]
+# # The Saliency Map
+saliency_up = torch.abs(saliency) * 1e7
+saliency_normed = (saliency_up - saliency_up.min())/(saliency_up.max() - saliency_up.min())
+saliency_normed_scaled = (saliency_normed + 0.3)**2
+saliency_scaled_nonlinear = torch.log(saliency_normed_scaled)
+saliency_pic = (saliency_scaled_nonlinear - saliency_scaled_nonlinear.min())/(saliency_scaled_nonlinear.max() - saliency_scaled_nonlinear.min())
+plt.imshow(saliency_pic)
 
-#%%
-plt.imshow(input_imgs[0].detach().cpu().permute(1,2,0))
-
-#%%
-class_pred = output[:, :, 5:][0][confidence_index[0]]
-class_pred.sort()
-
-#%%
-(class_pred == class_pred.max()).nonzero()
-
-#%%
-classes[7]
-
-#%%
-
-
-#%%
-
-
-#%%
-
-
-#%%
+#%% [markdown]
+# The actual image
+plt.imshow(input_imgs[0].detach())
