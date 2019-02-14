@@ -36,19 +36,6 @@ model.to(device)
 #%%
 from utils.datasets import *
 from utils.utils import *
-dataloader = DataLoader(ImageFolder(image_folder, img_size=image_size),
-                        batch_size=batch_size, shuffle=False, num_workers=n_cpu)
-
-classes = load_classes(class_path)
-#%%
-imgs = []
-img_detections = []
-
-#%%
-for batch_i, (img_paths, input_imgs) in enumerate(dataloader):
-    # Configure input
-    imgs.append(input_imgs)
-
 
 #%% [markdown]
 # # Let's organize and set this into a function
@@ -74,7 +61,7 @@ def img2Saliency(input_imgs, threshold=0.9):
         input_imgs.requires_grad=True
         if input_imgs.grad is not None: input_imgs.grad.data.zero_()
         output2 = model(input_imgs)
-        suppressed = non_max_suppression(output2, 80, threshold)
+        # suppressed = non_max_suppression(output2, 80, threshold)
         confidence_mask2 = output2[:, :, 4] > threshold
         confidence_preds2, class_preds2 = torch.max(output2[confidence_mask2][:,5:85], dim=1)
         conf_class2 = {conf:classes[class_preds2[i]] for i,conf in enumerate(confidence_preds2)}
@@ -103,7 +90,19 @@ def img2Saliency(input_imgs, threshold=0.9):
     plt.show()
 
 #%%
-img2Saliency(imgs[4])
+dataloader = DataLoader(ImageFolder(image_folder, img_size=image_size),
+                            batch_size=batch_size, shuffle=False, num_workers=n_cpu)
 
+classes = load_classes(class_path)
+    #%%
+    
+    #%%
+imgs = []
+img_detections = []
+
+    #%%
+for batch_i, (img_paths, input_imgs) in enumerate(dataloader):
+        # Configure input
+imgs.append(input_imgs)
 #%%
-plt.imshow(imgs[1][0].permute(1,2,0).detach().numpy())
+img2Saliency(imgs[0])
