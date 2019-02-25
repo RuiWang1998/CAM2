@@ -103,6 +103,11 @@ img_detections = []
     #%%
 for batch_i, (img_paths, input_imgs) in enumerate(dataloader):
         # Configure input
-imgs.append(input_imgs)
+    imgs.append(input_imgs)
 #%%
-img2Saliency(imgs[0])
+img2Saliency(imgs[0])   
+
+#%%
+
+
+#%%
