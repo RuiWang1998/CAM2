@@ -45,8 +45,8 @@ def img2Saliency(input_imgs, threshold=0.9):
 
     confidence_mask = output[:, :, 4] > threshold
 
-    confidence_preds, class_preds = torch.max(output[confidence_mask][:,5:85], dim=1)
-    conf_class = {conf:classes[class_preds[i]] for i,conf in enumerate(confidence_preds)}
+    confidence_preds, class_preds = torch.max(output[confidence_mask][:, 5:85], dim=1)
+    conf_class = {conf:classes[class_preds[i]] for i, conf in enumerate(confidence_preds)}
     class_conf = {class_id:[] for class_id in conf_class.values()}
     for conf, class_item in conf_class.items():
         class_conf[class_item].append(conf)
