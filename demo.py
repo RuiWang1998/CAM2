@@ -2,7 +2,7 @@ import torch
 import time
 import matplotlib.pyplot as plt
 
-from models import Generator
+from modelForCGAN import Generator
 from data_load import day_loader, nig_loader
 from constants import LATENT_DIM
 

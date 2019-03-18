@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from constants import IMG_INPUT_LEN, LATENT_DIM, NUM_CHANNEL, PROCESSOR_OUT, BOTTLENEK
 
+
 class ImageProcessor(nn.Module):
     def __init__(self):
         super(ImageProcessor, self).__init__()
@@ -39,7 +40,8 @@ class ImageProcessor(nn.Module):
         out = self.out(out)
 
         return out
-      
+
+
 class ImagePreProcessor(nn.Module):
     def __init__(self):
         super(ImagePreProcessor, self).__init__()
@@ -62,6 +64,7 @@ class ImagePreProcessor(nn.Module):
     def forward(self, x):
 
         return self.model(x)
+
 
 class Generator(nn.Module):
     def __init__(self):
@@ -94,6 +97,7 @@ class Generator(nn.Module):
         img = self.conv_blocks(out)
         return img / 2 + 0.5
 
+
 class Discriminator(nn.Module):
     def __init__(self):
         super(Discriminator, self).__init__()
@@ -117,7 +121,6 @@ class Discriminator(nn.Module):
           
         self.conv1 = conv_layer(64, 128)
         self.conv2 = conv_layer(128, 3)
-        
 
     def forward(self, img1, img2):
         out1 = self.imageProcessor(img1)

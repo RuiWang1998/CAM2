@@ -5,7 +5,7 @@ import time
 
 from constants import EPOCHS, LATENT_DIM, device, LR_G, LR_D, G_PATH, D_PATH
 from data_load import day_loader, nig_loader
-from models import Generator, Discriminator
+from modelForCGAN import Generator, Discriminator
 from function import generator_train_step, discriminator_train_step, visualize, save
 
 if __name__ == '__main__':

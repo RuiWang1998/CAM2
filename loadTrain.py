@@ -1,7 +1,7 @@
 import torch
 import time
 
-from models import Generator, Discriminator
+from modelForCGAN import Generator, Discriminator
 from constants import D_PATH, G_PATH, device, EPOCHS, LR_D, LR_G
 from function import generator_train_step, discriminator_train_step, save
 from data_load import day_loader, nig_loader
