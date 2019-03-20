@@ -191,7 +191,7 @@ class MultiStepVisualizer:
         save_img(f"{data_path}/layer{layer_idx}/Mono2/channel{channel_idx}_epoch{epoch_idx}.jpg",
                  img_to_save.detach().cpu().permute(1, 2, 0)[:, :, 2])
 
-    def get_nth_output(self, img, layer_idx):
+    def get_nth_output_layer(self, img, layer_idx):
         """
         This function gets the n-th layer output
         :param img: the input image
@@ -208,12 +208,13 @@ class MultiStepVisualizer:
                 return img
         return img
 
-    def visualize(self, layer_idx, channel_idx, epochs=30, optimizer=optimizers.Adam,
+    def visualize(self, layer_idx, channel_idx, n_th_output, epochs=30, optimizer=optimizers.Adam,
                   data_path=".", learning_rate=None, weight_decay=None):
         """
         This function does the visualization
         :param layer_idx: the index of the layer to visualize
         :param channel_idx: the channel index of the layer to visualize
+        :param n_th_output: the function to get the n-th output
         :param epochs: the number of epochs to train
         :param optimizer: the optimizer of the image
         :param data_path: the data path to store the images
@@ -232,7 +233,7 @@ class MultiStepVisualizer:
                 optimizer_instance.zero_grad()
 
                 img = self.generate_input_image()
-                output = self.get_nth_output(img, layer_idx)
+                output = n_th_output(img, layer_idx)
                 output_channels = output.mean(-1).mean(-1).mean(0)
                 activation = output_channels[channel_idx]
 
@@ -245,10 +246,11 @@ class MultiStepVisualizer:
             self.upscale_image()
             self.save_image(data_path, layer_idx, channel_idx, epochs)
 
-    def visualize_all_model(self):
+    def visualize_all_model(self, layer=True):
         """
         This function allows to visualize all the channels in a model
+        :param layer if use layer output
         """
         for layer_idx in range(self.layer_num):
             for channel_idx in self.channel_count[layer_idx]:
-                self.visualize(layer_idx, channel_idx)
+                self.visualize(layer_idx, channel_idx, self.get_nth_output_layer)
