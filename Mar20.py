@@ -6,7 +6,7 @@ import torch.distributions as distribution
 
 class MultiStepVisualizer:
     """
-    This should serve as a framework for YOLO and later some other models
+    This should serve as a framework for any sort of models and later some other models
     """
     def __init__(self, module_list, initial_size=30, model_intake_size=416, upscale_step=12,
                  batch_size=1, channel_num=3, generate_mean=0, generate_std=1, device='cpu'):
@@ -23,12 +23,16 @@ class MultiStepVisualizer:
         :param device: the device to put the model and data on
         """
         self.module_list = module_list
+        self.layer_num = len(self.module_list)  # the number of layers in a model
+        self.channel_count = []
         self.step_idx = 0                       # the current step's index
         self.ini_size = initial_size
         self.input_size = model_intake_size
         self.upscale_step = upscale_step
         self.batch_size = batch_size
-        self.z_image = self.image_init(batch_size, channel_num, model_intake_size)  # initialize the first image
+        self.z_image = self.image_init(self.random_init, self.sampler, self.cast, batch_size,
+                                       channel_num, model_intake_size)  # initialize the first image
+        self.z_image.requires_grad=True
         # the sampler to generate new images
         self.sampler = distribution.Normal(self.cast(generate_mean), self.cast(generate_std))
         self.current_size = self.ini_size   # the current size of the image
@@ -43,20 +47,56 @@ class MultiStepVisualizer:
         """
         return torch.tensor(value).type(d_type)
 
-    def image_init(self, batch_size, channel_num, model_intake_size):
+    @staticmethod
+    def random_init(sampler, caster, batch_size, channel_num, model_intake_size, device):
         """
         This function initializes a new original image
+        :param sampler: the sampler to sample from
+        :param caster: the casting function
         :param batch_size: the batch size of the image
         :param channel_num: the number of channels
         :param model_intake_size: the image size of the model
+        :param device: the device to put it on
         :return: the image initialized
         """
-        batch_size = self.cast(batch_size)
-        channel_num = self.cast(channel_num)
-        model_intake_size= self.cast(model_intake_size)
+        batch_size = caster(batch_size)
+        channel_num = caster(channel_num)
+        model_intake_size= caster(model_intake_size)
         if not isinstance(model_intake_size, list):
-            return self.sampler.sample((batch_size, channel_num, model_intake_size, model_intake_size))
+            return sampler.sample((batch_size, channel_num, model_intake_size, model_intake_size)).to(device)
         else:
-            return self.sampler.sample((batch_size, channel_num, model_intake_size[0], model_intake_size[1]))
+            return sampler.sample((batch_size, channel_num, model_intake_size[0], model_intake_size[1])).to(device)
 
+    @staticmethod
+    def mask_init(self, sampler, caster, batch_size, channel_num, model_intake_size, device, noise_ratio=0.1):
+        """
+        This function allows to create a mask onto
+        :param self: the class itself
+        :param sampler: the sampler to sample from
+        :param caster: the casting function
+        :param batch_size: the batch size of the image
+        :param channel_num: the number of channels
+        :param model_intake_size: the image size of the model
+        :param noise_ratio: the noise ratio imposed onto the mask
+        :param device: the device to put it on
+        :return: the random mask
+        """
+        return self.random_init(sampler, caster, batch_size, channel_num, model_intake_size, device) * noise_ratio
+
+    @staticmethod
+    def image_init(init_function, sampler, caster, batch_size, channel_num, model_intake_size, device):
+        """
+        This function allows to create a random image
+        :param init_function: the class itself
+        :param sampler: the sampler to sample from
+        :param caster: the casting function
+        :param batch_size: the batch size of the image
+        :param channel_num: the number of channels
+        :param model_intake_size: the image size of the model
+        :param device: the device to put it on
+        :return:
+        """
+        image = init_function(sampler, caster, batch_size, channel_num, model_intake_size, device)
+        image.requires_grad = True
+        return image
 
