@@ -34,7 +34,7 @@ class MultiStepVisualizer:
 
         self.layer_num = len(self.module_list)  # the number of layers in a model
         self.channel_count = []
-        self.module_list_to_device()
+        self._module_list_to_device()
 
         self.input_size = model_intake_size
         self.upscale_step = upscale_step
@@ -55,7 +55,7 @@ class MultiStepVisualizer:
 
         self.device = device
 
-    def module_list_to_device(self):
+    def _module_list_to_device(self):
         """
         This function counts the number of channels in each layer
         """
@@ -220,7 +220,6 @@ class MultiStepVisualizer:
         :param learning_rate: the learning rate of the optimizer
         :param weight_decay: the weight decay of the optimizer
         """
-
         if learning_rate is None:
             learning_rate = 0.001
         if weight_decay is None:
@@ -245,3 +244,11 @@ class MultiStepVisualizer:
 
             self.upscale_image()
             self.save_image(data_path, layer_idx, channel_idx, epochs)
+
+    def visualize_all_model(self):
+        """
+        This function allows to visualize all the channels in a model
+        """
+        for layer_idx in range(self.layer_num):
+            for channel_idx in self.channel_count[layer_idx]:
+                self.visualize(layer_idx, channel_idx)
