@@ -1,8 +1,9 @@
-import torch
-import matplotlib.pyplot as plt
-from YOLOv3.models import Darknet
-import scipy.misc
 import os
+
+import scipy.misc
+import torch
+
+from YOLOv3.models import Darknet
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 image_size = 416
@@ -25,15 +26,15 @@ def tanh(x, scaling=0.2):
 model.eval()
 for layer_idx in range(106):
     try:
-        path = f"channels/layer{layer_idx}"
+        path = f"visuals/layer{layer_idx}"
         os.mkdir(path)
-        path = f"channels/layer{layer_idx}/Color"
+        path = f"visuals/layer{layer_idx}/Color"
         os.mkdir(path)
-        path = f"channels/layer{layer_idx}/Mono0"
+        path = f"visuals/layer{layer_idx}/Mono0"
         os.mkdir(path)
-        path = f"channels/layer{layer_idx}/Mono1"
+        path = f"visuals/layer{layer_idx}/Mono1"
         os.mkdir(path)
-        path = f"channels/layer{layer_idx}/Mono2"
+        path = f"visuals/layer{layer_idx}/Mono2"
         os.mkdir(path)
     except OSError:
         pass
@@ -52,13 +53,13 @@ for layer_idx in range(106):
                 channel_act.backward()
                 optimizer.step()
                 if (i + 1) % EPOCHS == 0:
-                    scipy.misc.imsave(f'channels/layer{layer_idx}/Color/layer{layer_idx}_channel{channel_idx}.jpg',
+                    scipy.misc.imsave(f'visuals/layer{layer_idx}/Color/layer{layer_idx}_channel{channel_idx}.jpg',
                                       tanh(z[0]).detach().cpu().permute(1, 2, 0)[:, :, :])
-                    scipy.misc.imsave(f'channels/layer{layer_idx}/Mono0/layer{layer_idx}_channel{channel_idx}.jpg',
+                    scipy.misc.imsave(f'visuals/layer{layer_idx}/Mono0/layer{layer_idx}_channel{channel_idx}.jpg',
                                       tanh(z[0]).detach().cpu().permute(1, 2, 0)[:, :, 0])
-                    scipy.misc.imsave(f'channels/layer{layer_idx}/Mono1/layer{layer_idx}_channel{channel_idx}.jpg',
+                    scipy.misc.imsave(f'visuals/layer{layer_idx}/Mono1/layer{layer_idx}_channel{channel_idx}.jpg',
                                       tanh(z[0]).detach().cpu().permute(1, 2, 0)[:, :, 1])
-                    scipy.misc.imsave(f'channels/layer{layer_idx}/Mono2/layer{layer_idx}_channel{channel_idx}.jpg',
+                    scipy.misc.imsave(f'visuals/layer{layer_idx}/Mono2/layer{layer_idx}_channel{channel_idx}.jpg',
                                       tanh(z[0]).detach().cpu().permute(1, 2, 0)[:, :, 2])
             print(f"Layer {layer_idx} | channel {channel_idx}")
         except IndexError:
