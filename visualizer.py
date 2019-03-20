@@ -58,9 +58,11 @@ class MultiStepVisualizer:
     def _module_list_to_device(self):
         """
         This function counts the number of channels in each layer
+        Note that for any model with residue network, we have to overload this method
         """
         place_holder = self.random_init(self.input_size)
         for i, layer in enumerate(self.module_list):
+            self.get_nth_output_layer(place_holder, i)
             self.module_list[i] = layer.to(self.device)
             try:
                 place_holder = self.module_list[i](place_holder)
@@ -194,6 +196,7 @@ class MultiStepVisualizer:
     def get_nth_output_layer(self, img, layer_idx):
         """
         This function gets the n-th layer output
+        Note that for any model with residue network, we have to overload this method
         :param img: the input image
         :param layer_idx: the layer index
         :return: the output
@@ -208,13 +211,12 @@ class MultiStepVisualizer:
                 return img
         return img
 
-    def visualize(self, layer_idx, channel_idx, n_th_output, epochs=30, optimizer=optimizers.Adam,
+    def visualize(self, layer_idx, channel_idx, epochs=30, optimizer=optimizers.Adam,
                   data_path=".", learning_rate=None, weight_decay=None):
         """
         This function does the visualization
         :param layer_idx: the index of the layer to visualize
         :param channel_idx: the channel index of the layer to visualize
-        :param n_th_output: the function to get the n-th output
         :param epochs: the number of epochs to train
         :param optimizer: the optimizer of the image
         :param data_path: the data path to store the images
@@ -233,7 +235,7 @@ class MultiStepVisualizer:
                 optimizer_instance.zero_grad()
 
                 img = self.generate_input_image()
-                output = n_th_output(img, layer_idx)
+                output = self.get_nth_output_layer(img, layer_idx)
                 output_channels = output.mean(-1).mean(-1).mean(0)
                 activation = output_channels[channel_idx]
 
@@ -253,4 +255,4 @@ class MultiStepVisualizer:
         """
         for layer_idx in range(self.layer_num):
             for channel_idx in self.channel_count[layer_idx]:
-                self.visualize(layer_idx, channel_idx, self.get_nth_output_layer)
+                self.visualize(layer_idx, channel_idx)
