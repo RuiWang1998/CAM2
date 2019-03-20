@@ -14,7 +14,7 @@ class MultiStepVisualizer:
     """
 
     def __init__(self, model, module_list=None, initial_size=30, model_intake_size=416, upscale_step=12,
-                 batch_size=1, channel_num=3, device=torch.device('cpu')):
+                 batch_size=1, channel_num=3, cuda=True):
         """
         This function initializes the visualizer
         :param module_list: the module list from the model
@@ -23,9 +23,11 @@ class MultiStepVisualizer:
         :param upscale_step: the number of steps to take to upscale an image
         :param batch_size: the batch size of the image to optimize
         :param channel_num: the number of channels
-        :param device: the device to put the model and data on
+        :param cuda: the device to put the model and data on
         """
-        self.device = device
+        self.cuda = cuda and torch.cuda.is_available()
+        self.device = torch.device('cuda:0' if self.cuda else 'cpu')
+
         if model is not None:
             self.model = model.to(self.device)
         if module_list is not None:
@@ -52,9 +54,7 @@ class MultiStepVisualizer:
         else:
             self.input_generator = nn.UpsamplingNearest2d(size=model_intake_size)
 
-        self.up_scaler = nn.UpsamplingNearest2d(self.upscale_ratio)
-
-        self.device = device
+        self.up_scaler = nn.UpsamplingNearest2d(scale_factor=self.upscale_ratio)
 
     def _module_list_to_device(self):
         """
@@ -107,7 +107,7 @@ class MultiStepVisualizer:
         else:
             size = torch.Size([self.batch_size, self.channel_num, image_size[0], image_size[1]])
 
-        return sampler.sample(size).to(self.device)
+        return sampler.sample(size)
 
     def noise_gen(self, image_size, noise_ratio=0.1, mean=0, std=1):
         """
@@ -138,17 +138,21 @@ class MultiStepVisualizer:
         This function creates an input image for the model
         :return: the input image
         """
-        return self.tanh(self.input_generator(self.z_image))
+        return self.tanh(self.input_generator(self.z_image).to(self.device))
 
     def upscale_image(self, mask=True):
         """
         This function up-scales the current image
         :param mask: if to mask the up-scaled image
         """
-        self.z_image = self.up_scaler(self.z_image)
+        self.z_image = self.z_image.cpu()
+        if self.cuda:
+            self.clear_cuda_memory()
+        z_image = self.up_scaler(self.z_image)
         if mask:
-            self.z_image = self.z_image + self.noise_gen()
-        self.z_image.requires_grad = True
+            z_image = z_image + self.noise_gen(z_image.shape[-1])
+
+        self.z_image = z_image.clone().detach().requires_grad_(True)
 
     @staticmethod
     def mkdir_single(path):
@@ -175,25 +179,41 @@ class MultiStepVisualizer:
         self.mkdir_single(f"{data_path}/layer{layer_idx}/Mono1")
         self.mkdir_single(f"{data_path}/layer{layer_idx}/Mono2")
 
-    def save_image(self, data_path, layer_idx, channel_idx, epoch_idx):
+    def save_image(self, data_path, layer_idx, channel_idx, epoch_idx, id_batch=0, step_idx=0):
         """
         This function saves the image
         :param data_path: the data path to save to
         :param layer_idx: the layer index of the images
         :param channel_idx: the channel index of the images
         :param epoch_idx: the epoch index this image is from
+        :param id_batch: the id in the batch
+        :param step_idx: the step index
         """
         self.mkdir(data_path, layer_idx=layer_idx)
 
         img_to_save = self._generate_input_image()
-        save_img(f"{data_path}/layer{layer_idx}/Color/channel{channel_idx}_epoch{epoch_idx}.jpg",
-                 img_to_save.detach().cpu().permute(1, 2, 0)[:, :, :])
-        save_img(f"{data_path}/layer{layer_idx}/Mono0/channel{channel_idx}_epoch{epoch_idx}.jpg",
-                 img_to_save.detach().cpu().permute(1, 2, 0)[:, :, 0])
-        save_img(f"{data_path}/layer{layer_idx}/Mono1/channel{channel_idx}_epoch{epoch_idx}.jpg",
-                 img_to_save.detach().cpu().permute(1, 2, 0)[:, :, 1])
-        save_img(f"{data_path}/layer{layer_idx}/Mono2/channel{channel_idx}_epoch{epoch_idx}.jpg",
-                 img_to_save.detach().cpu().permute(1, 2, 0)[:, :, 2])
+        save_img(f"{data_path}/layer{layer_idx}/Color/C{channel_idx}S{step_idx}E{epoch_idx}.jpg",
+                 img_to_save[id_batch].detach().cpu().permute(1, 2, 0)[:, :, :])
+        save_img(f"{data_path}/layer{layer_idx}/Mono0/C{channel_idx}S{step_idx}E{epoch_idx}.jpg",
+                 img_to_save[id_batch].detach().cpu().permute(1, 2, 0)[:, :, 0])
+        save_img(f"{data_path}/layer{layer_idx}/Mono1/C{channel_idx}S{step_idx}E{epoch_idx}.jpg",
+                 img_to_save[id_batch].detach().cpu().permute(1, 2, 0)[:, :, 1])
+        save_img(f"{data_path}/layer{layer_idx}/Mono2/C{channel_idx}S{step_idx}E{epoch_idx}.jpg",
+                 img_to_save[id_batch].detach().cpu().permute(1, 2, 0)[:, :, 2])
+
+    def clear_cuda_memory(self):
+        """
+        This function clears the cuda memory
+        """
+        try:
+            self.z_image = self.z_image.detach()
+            data_holder = self.z_image.data
+            del self.z_image
+            self.z_image = data_holder
+        except AttributeError:
+            pass
+        if self.cuda:
+            torch.cuda.empty_cache()
 
     def get_nth_output_layer(self, img, layer_idx):
         """
@@ -203,7 +223,6 @@ class MultiStepVisualizer:
         :param layer_idx: the layer index
         :return: the output
         """
-
         for i, layer in enumerate(self.module_list):
             try:
                 img = layer(img)
@@ -213,7 +232,7 @@ class MultiStepVisualizer:
                 return img
         return img
 
-    def visualize(self, layer_idx, channel_idx, epochs=30, optimizer=optimizers.Adam,
+    def visualize(self, layer_idx, channel_idx, epochs=3, optimizer=optimizers.Adam,
                   data_path=".", learning_rate=None, weight_decay=None):
         """
         This function does the visualization
@@ -231,15 +250,19 @@ class MultiStepVisualizer:
             weight_decay = 0
 
         for step in range(self.upscale_step):
-
+            # prepares the image
+            self.z_image = self.z_image.to(self.device)
+            self.z_image = self.z_image.detach()
+            self.z_image.requires_grad = True
             optimizer_instance = optimizer([self.z_image], lr=learning_rate, weight_decay=weight_decay)
+
             for epoch in range(epochs):
                 optimizer_instance.zero_grad()
 
                 img = self._generate_input_image()
                 output = self.get_nth_output_layer(img, layer_idx)
                 output_channels = output.mean(-1).mean(-1).mean(0)
-                activation = output_channels[channel_idx]
+                activation = - output_channels[channel_idx]
 
                 activation.backward()
                 optimizer_instance.step()
@@ -247,13 +270,29 @@ class MultiStepVisualizer:
                 if epoch == math.floor(epochs / 2):
                     self.save_image(data_path, layer_idx, channel_idx, epoch)
 
+            self.save_image(data_path, layer_idx, channel_idx, epochs, step_idx=step)
+            if self.cuda:
+                self.clear_cuda_memory()
+            # this should put z_img back to
             self.upscale_image()
-            self.save_image(data_path, layer_idx, channel_idx, epochs)
 
-    def visualize_all_model(self):
+        if self.cuda:
+            self.clear_cuda_memory()
+
+    def visualize_whole_layer(self, layer_idx, epochs=3, optimizer=optimizers.Adam,
+                              data_path=".", learning_rate=None, weight_decay=None):
+        """
+        This function allows to visualize a whole layer at once
+        """
+        for channel_idx in range(self.channel_count[layer_idx]):
+            self.visualize(layer_idx=layer_idx, channel_idx=channel_idx, epochs=epochs, optimizer=optimizer,
+                           data_path=data_path, learning_rate=learning_rate, weight_decay=weight_decay)
+
+    def visualize_all_model(self, epochs=3, optimizer=optimizers.Adam,
+                            data_path=".", learning_rate=None, weight_decay=None):
         """
         This function allows to visualize all the channels in a model
         """
         for layer_idx in range(self.layer_num):
-            for channel_idx in self.channel_count[layer_idx]:
-                self.visualize(layer_idx, channel_idx)
+            self.visualize_whole_layer(layer_idx=layer_idx, epochs=epochs, optimizer=optimizer,
+                                       data_path=data_path, learning_rate=learning_rate, weight_decay=weight_decay)
