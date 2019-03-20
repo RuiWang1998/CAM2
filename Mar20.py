@@ -25,7 +25,8 @@ class MultiStepVisualizer:
         :param channel_num: the number of channels
         :param device: the device to put the model and data on
         """
-        self.model = model
+        if model is not None
+            self.model = model.to(self.device)
         if module_list is not None:
             self.module_list = module_list
         else:
@@ -33,10 +34,12 @@ class MultiStepVisualizer:
 
         self.layer_num = len(self.module_list)  # the number of layers in a model
         self.channel_count = []
+        self.module_list_to_device()
+
         self.input_size = model_intake_size
         self.upscale_step = upscale_step
         self.batch_size = batch_size
-        self.channel_num = channel_num
+        self.channel_num = channel_num  # number of channels in the input image
         self.z_image = self.image_init(initial_size)  # initialize the first image
         self.z_image.requires_grad = True
         # the sampler to generate new images
@@ -48,15 +51,23 @@ class MultiStepVisualizer:
         else:
             self.input_generator = nn.UpsamplingNearest2d(size=model_intake_size)
 
-        self.upscaler = nn.UpsamplingNearest2d(self.upscale_ratio)
+        self.up_scaler = nn.UpsamplingNearest2d(self.upscale_ratio)
 
         self.device = device
 
-    def _count_channel(self):
+    def module_list_to_device(self):
         """
         This function counts the number of channels in each layer
-        :return: the number of
         """
+        place_holder = self.random_init(self.input_size)
+        for i, layer in enumerate(self.module_list):
+            self.module_list[i] = layer.to(self.device)
+            try:
+                place_holder = self.module_list[i](place_holder)
+                output_shape = place_holder.shape
+                self.channel_count.append(output_shape[1])
+            except NotImplementedError:
+                self.channel_count.append(0)
 
     @staticmethod
     def cast(value, d_type=torch.float32):
@@ -130,7 +141,7 @@ class MultiStepVisualizer:
         This function up-scales the current image
         :param mask: if to mask the up-scaled image
         """
-        self.z_image = self.upscaler(self.z_image)
+        self.z_image = self.up_scaler(self.z_image)
         if mask:
             self.z_image = self.z_image + self.noise_gen()
         self.z_image.requires_grad = True
