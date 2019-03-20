@@ -25,6 +25,7 @@ class MultiStepVisualizer:
         :param channel_num: the number of channels
         :param device: the device to put the model and data on
         """
+        self.device = device
         if model is not None:
             self.model = model.to(self.device)
         if module_list is not None:
@@ -34,12 +35,12 @@ class MultiStepVisualizer:
 
         self.layer_num = len(self.module_list)  # the number of layers in a model
         self.channel_count = []
+        self.input_size = model_intake_size
+        self.batch_size = batch_size
+        self.upscale_step = upscale_step
+        self.channel_num = channel_num  # number of channels in the input image
         self._module_list_to_device()
 
-        self.input_size = model_intake_size
-        self.upscale_step = upscale_step
-        self.batch_size = batch_size
-        self.channel_num = channel_num  # number of channels in the input image
         self.z_image = self.image_init(initial_size)  # initialize the first image
         self.z_image.requires_grad = True
         # the sampler to generate new images
@@ -99,13 +100,14 @@ class MultiStepVisualizer:
         :param std: the standard deviation of the distribution
         :return: the image initialized
         """
-        image_size = self.cast(image_size)
         sampler = distribution.Normal(self.cast(mean), self.cast(std))
 
         if not isinstance(image_size, list):
-            return sampler.sample((self.batch_size, self.channel_num, image_size, image_size)).to(self.device)
+            size = torch.Size([self.batch_size, self.channel_num, image_size, image_size])
         else:
-            return sampler.sample((self.batch_size, self.channel_num, image_size[0], image_size[1])).to(self.device)
+            size = torch.Size([self.batch_size, self.channel_num, image_size[0], image_size[1]])
+
+        return sampler.sample(size).to(self.device)
 
     def noise_gen(self, image_size, noise_ratio=0.1, mean=0, std=1):
         """
@@ -131,7 +133,7 @@ class MultiStepVisualizer:
 
         return image
 
-    def generate_input_image(self):
+    def _generate_input_image(self):
         """
         This function creates an input image for the model
         :return: the input image
@@ -183,7 +185,7 @@ class MultiStepVisualizer:
         """
         self.mkdir(data_path, layer_idx=layer_idx)
 
-        img_to_save = self.generate_input_image()
+        img_to_save = self._generate_input_image()
         save_img(f"{data_path}/layer{layer_idx}/Color/channel{channel_idx}_epoch{epoch_idx}.jpg",
                  img_to_save.detach().cpu().permute(1, 2, 0)[:, :, :])
         save_img(f"{data_path}/layer{layer_idx}/Mono0/channel{channel_idx}_epoch{epoch_idx}.jpg",
@@ -234,7 +236,7 @@ class MultiStepVisualizer:
             for epoch in range(epochs):
                 optimizer_instance.zero_grad()
 
-                img = self.generate_input_image()
+                img = self._generate_input_image()
                 output = self.get_nth_output_layer(img, layer_idx)
                 output_channels = output.mean(-1).mean(-1).mean(0)
                 activation = output_channels[channel_idx]
@@ -251,7 +253,6 @@ class MultiStepVisualizer:
     def visualize_all_model(self):
         """
         This function allows to visualize all the channels in a model
-        :param layer if use layer output
         """
         for layer_idx in range(self.layer_num):
             for channel_idx in self.channel_count[layer_idx]:
