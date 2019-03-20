@@ -35,7 +35,7 @@ for layer_idx in range(106):
         os.mkdir(path)
         path = f"channels/layer{layer_idx}/Mono2"
         os.mkdir(path)
-    except:
+    except OSError:
         pass
     for channel_idx in range(1024):
         try:
