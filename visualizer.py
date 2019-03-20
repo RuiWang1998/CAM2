@@ -25,7 +25,7 @@ class MultiStepVisualizer:
         :param channel_num: the number of channels
         :param device: the device to put the model and data on
         """
-        if model is not None
+        if model is not None:
             self.model = model.to(self.device)
         if module_list is not None:
             self.module_list = module_list
