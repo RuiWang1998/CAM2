@@ -248,7 +248,7 @@ class MultiStepVisualizer:
             self.upscale_image()
             self.save_image(data_path, layer_idx, channel_idx, epochs)
 
-    def visualize_all_model(self, layer=True):
+    def visualize_all_model(self):
         """
         This function allows to visualize all the channels in a model
         :param layer if use layer output
