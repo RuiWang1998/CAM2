@@ -13,6 +13,7 @@ class YOLOv3Visualizer(MultiStepVisualizer):
         """
         First let us inherit the visualizer
         :param model: the YOLOv3 model pre-trained
+        :param device: the device to work on
         """
         super(YOLOv3Visualizer, self).__init__(model, module_list=module_list, device=device)
 
@@ -31,7 +32,7 @@ class YOLOv3Visualizer(MultiStepVisualizer):
         """
         place_holder = self.random_init(self.input_size)
         outputs = self.model(place_holder, layer_idx=list(range(self.layer_num)))
-        len(outputs)
+        self.layer_num = len(set(outputs))
 
 
 if __name__ == "__main__":
