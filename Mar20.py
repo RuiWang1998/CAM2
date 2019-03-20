@@ -1,9 +1,6 @@
+import scipy.misc as im
 import torch
-import torch.nn as nn
-import torch.optim.adam as Adam
 import torch.distributions as distribution
-
-import math
 
 
 class MultiStepVisualizer:
@@ -39,7 +36,9 @@ class MultiStepVisualizer:
         self.sampler = distribution.Normal(self.cast(generate_mean), self.cast(generate_std))
         self.current_size = self.ini_size   # the current size of the image
         # get the scale
-        self.upscale_scale = (self.input_size / self.ini_size) ** (1 / self.upscale_step)
+        self.upscale_ratio = (self.input_size / self.ini_size) ** (1 / self.upscale_step)
+
+        self.device = device
 
     @staticmethod
     def cast(value, d_type=torch.float32):
@@ -104,9 +103,10 @@ class MultiStepVisualizer:
         image.requires_grad = True
         return image
 
-    @staticmethod
-    def get_new_size(current_size, scale):
-        return current_size * scale
+    def resize_new(self, ratio):
+        out_img = im.imresize(self.z_image, ratio)
+        self.z_image = self.cast(out_img / 255).to(self.device)
+        self.z_image.requires_grad = True
 
-    
-
+    def upscale_image(self):
+        self.resize_new(self.upscale_ratio)
