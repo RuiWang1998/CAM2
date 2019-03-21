@@ -1,3 +1,4 @@
+import gc
 import math
 import os
 
@@ -145,14 +146,11 @@ class MultiStepVisualizer:
         This function up-scales the current image
         :param mask: if to mask the up-scaled image
         """
-        self.z_image = self.z_image.cpu()
-        if self.cuda:
-            self.clear_cuda_memory()
         z_image = self.up_scaler(self.z_image)
         if mask:
             z_image = z_image + self.noise_gen(z_image.shape[-1])
 
-        self.z_image = z_image.clone().detach().requires_grad_(True)
+        self.z_image = z_image.clone().detach().to(self.device).requires_grad_(True)
 
     @staticmethod
     def mkdir_single(path):
@@ -206,14 +204,12 @@ class MultiStepVisualizer:
         This function clears the cuda memory
         """
         try:
-            self.z_image = self.z_image.detach()
-            data_holder = self.z_image.data
+            z_image = self.z_image.clone().detach().cpu().data
             del self.z_image
-            self.z_image = data_holder
+            torch.cuda.empty_cache()
+            self.z_image = z_image.requires_grad_()
         except AttributeError:
             pass
-        if self.cuda:
-            torch.cuda.empty_cache()
 
     def get_nth_output_layer(self, img, layer_idx):
         """
@@ -251,9 +247,6 @@ class MultiStepVisualizer:
 
         for step in range(self.upscale_step):
             # prepares the image
-            self.z_image = self.z_image.to(self.device)
-            self.z_image = self.z_image.detach()
-            self.z_image.requires_grad = True
             optimizer_instance = optimizer([self.z_image], lr=learning_rate, weight_decay=weight_decay)
 
             for epoch in range(epochs):
@@ -271,10 +264,12 @@ class MultiStepVisualizer:
                     self.save_image(data_path, layer_idx, channel_idx, epoch)
 
             self.save_image(data_path, layer_idx, channel_idx, epochs, step_idx=step)
-            if self.cuda:
+            if self.cuda:  # this should put self.z_image onto CPU
                 self.clear_cuda_memory()
             # this should put z_img back to
             self.upscale_image()
+            # this clears system memory
+            gc.collect()
 
         if self.cuda:
             self.clear_cuda_memory()
@@ -283,6 +278,7 @@ class MultiStepVisualizer:
                               data_path=".", learning_rate=None, weight_decay=None):
         """
         This function allows to visualize a whole layer at once
+        Proceed with caution since Pytorch's GRAM management is not quite as good as the function requires
         """
         for channel_idx in range(self.channel_count[layer_idx]):
             self.visualize(layer_idx=layer_idx, channel_idx=channel_idx, epochs=epochs, optimizer=optimizer,
@@ -292,6 +288,7 @@ class MultiStepVisualizer:
                             data_path=".", learning_rate=None, weight_decay=None):
         """
         This function allows to visualize all the channels in a model
+        Proceed with caution since Pytorch's GRAM management is not quite as good as the function requires
         """
         for layer_idx in range(self.layer_num):
             self.visualize_whole_layer(layer_idx=layer_idx, epochs=epochs, optimizer=optimizer,
