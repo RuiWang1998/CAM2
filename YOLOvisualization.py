@@ -65,6 +65,6 @@ if __name__ == "__main__":
 
     visualizer = YOLOv3Visualizer(YOLOv3, module_list=yolo_module_list, cuda=True)
     visualizer.visualize(layer_idx, channel_idx, data_path='visualization', learning_rate=lr, weight_decay=1e-5,
-                         epochs=)
+                         epochs=epochs)
     ####
     # visualizer.visualize_whole_layer(10, data_path='visualization', weight_decay=1e-5)
