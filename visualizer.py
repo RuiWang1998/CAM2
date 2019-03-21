@@ -1,5 +1,4 @@
 import gc
-import math
 import os
 import shutil
 
@@ -320,7 +319,7 @@ class MultiStepVisualizer:
                 self.forward_pass(layer_idx, channel_idx, optimizer_instance)
 
                 # save image
-                if epoch == math.floor(epochs / 2):
+                if epoch * (step + 1) % 5 == 0:
                     self.save_image(data_path, layer_idx, channel_idx, epoch)
 
             self.save_image(data_path, layer_idx, channel_idx, epochs, step_idx=step)
