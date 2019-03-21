@@ -163,19 +163,20 @@ class MultiStepVisualizer:
         except FileExistsError:
             pass
 
-    def mkdir(self, data_path, layer_idx):
+    def mkdir(self, data_path, layer_idx, channel_idx):
         """
         This function creates the folders to store the visualizations
         :param data_path: the data path to store in
         :param layer_idx: the layer number
+        :param channel_idx: the channel index
         """
         self.mkdir_single(f"{data_path}")
         self.mkdir_single(f"{data_path}/layer{layer_idx}")
-        self.mkdir_single(f"{data_path}/layer{layer_idx}")
-        self.mkdir_single(f"{data_path}/layer{layer_idx}/Color")
-        self.mkdir_single(f"{data_path}/layer{layer_idx}/Mono0")
-        self.mkdir_single(f"{data_path}/layer{layer_idx}/Mono1")
-        self.mkdir_single(f"{data_path}/layer{layer_idx}/Mono2")
+        self.mkdir_single(f"{data_path}/layer{layer_idx}/Channel{channel_idx}")
+        self.mkdir_single(f"{data_path}/layer{layer_idx}/Channel{channel_idx}/Color")
+        self.mkdir_single(f"{data_path}/layer{layer_idx}/Channel{channel_idx}/Mono0")
+        self.mkdir_single(f"{data_path}/layer{layer_idx}/Channel{channel_idx}/Mono1")
+        self.mkdir_single(f"{data_path}/layer{layer_idx}/Channel{channel_idx}/Mono2")
 
     @staticmethod
     def rm_r_dir(data_path):
