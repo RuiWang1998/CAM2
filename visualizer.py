@@ -60,7 +60,7 @@ class MultiStepVisualizer:
         """
         place_holder = self.random_init(self.input_size)
         for i, layer in enumerate(self.module_list):
-            self.get_nth_output_layer(place_holder, i)
+            self.forward_pass(place_holder, i)
             self.module_list[i] = layer.to(self.device)
             try:
                 place_holder = self.module_list[i](place_holder)
@@ -224,7 +224,7 @@ class MultiStepVisualizer:
         except AttributeError:
             pass
 
-    def get_nth_output_layer(self, img, layer_idx):
+    def forward_pass(self, img, layer_idx):
         """
         This function gets the n-th layer output
         Note that for any model with residue network, we have to overload this method
@@ -248,7 +248,26 @@ class MultiStepVisualizer:
             self.z_image = self.image_init(size)
             self.new = 1
 
-    def forward_pass(self, layer_idx, channel_idx, optimizer):
+    def one_pass_neuron(self, layer_idx, channel_idx, neuron_x, neuron_y, optimizer):
+        """
+        This function does the one pass on a neuron
+        :param layer_idx: the layer index of the neuron
+        :param channel_idx: the channel index of the neuron
+        :param neuron_x: the x coordinate of the neuron
+        :param neuron_y: the y coordinate of the neuron
+        :param optimizer: the optimzer
+        """
+        optimizer.zero_grad()
+
+        img = self.generate_input_image()
+        output = self.forward_pass(img, layer_idx)
+        activation = output.mean(0)[channel_idx, neuron_x, neuron_y]
+        loss = - activation
+
+        loss.backward()
+        optimizer.step()
+
+    def one_pass_channel(self, layer_idx, channel_idx, optimizer):
         """
         This function performs a forward pass
         :param layer_idx: the layer index
@@ -258,7 +277,7 @@ class MultiStepVisualizer:
         optimizer.zero_grad()
 
         img = self.generate_input_image()
-        output = self.get_nth_output_layer(img, layer_idx)
+        output = self.forward_pass(img, layer_idx)
         output_channels = output.mean(-1).mean(-1).mean(0)
         activation = - output_channels[channel_idx]
 
@@ -266,18 +285,31 @@ class MultiStepVisualizer:
         optimizer.step()
 
     def vanilla_visualize(self, layer_idx, channel_idx, epochs, optimizer=optimizers.Adam,
-                          data_path="vanilla_vis", learning_rate=0.001, weight_decay=0):
-
+                          data_path="vanilla_vis", learning_rate=0.001, weight_decay=0, forward_pass=None):
+        """
+        This function performs the vanilla visualization by optimization
+        :param layer_idx: the layer index
+        :param channel_idx: the channel index
+        :param epochs: the number of epochs
+        :param optimizer: the optimizer used
+        :param data_path: the data path to store the images
+        :param learning_rate: the learning rate
+        :param weight_decay: the weight decay, used for regularization
+        :param forward_pass: the function to forward
+        """
         self.refresh(self.input_size)
         print(f"Start to visualize channel {channel_idx} layer {layer_idx}")
         self.del_dir(f"{data_path}/layer{layer_idx}/Channel{channel_idx}")
+
+        if forward_pass is None:
+            forward_pass = self.one_pass_channel
 
         # prepares the image
         optimizer_instance = optimizer([self.z_image], lr=learning_rate, weight_decay=weight_decay)
 
         img_idx = 0
         for epoch in range(epochs):
-            self.forward_pass(layer_idx, channel_idx, optimizer_instance)
+            forward_pass(layer_idx, channel_idx, optimizer_instance)
 
             # save image
             if epoch % 5 == 0:
@@ -289,7 +321,7 @@ class MultiStepVisualizer:
 
     def multistep_visualize(self, layer_idx, channel_idx, epochs=3, optimizer=optimizers.Adam,
                             data_path="multi_vis", learning_rate=0.001, weight_decay=0, scale_step=12,
-                            initial_size=30):
+                            initial_size=30, forward_pass=None):
         """
         This function does the visualization
         :param layer_idx: the index of the layer to visualize
@@ -300,6 +332,7 @@ class MultiStepVisualizer:
         :param learning_rate: the learning rate of the optimizer
         :param weight_decay: the weight decay of the optimizer
         :param initial_size: the initial input size
+        :param forward_pass: the function that performs the forward pass
         """
 
         self.refresh(initial_size)
@@ -307,13 +340,16 @@ class MultiStepVisualizer:
         print(f"Start to visualize channel {channel_idx} layer {layer_idx} with Multistep")
         self.del_dir(f"{data_path}/layer{layer_idx}/Channel{channel_idx}")
 
+        if forward_pass is None:
+            forward_pass = self.one_pass_channel
+
         img_idx = 0
         for step in range(scale_step):
             # prepares the image
             optimizer_instance = optimizer([self.z_image], lr=learning_rate, weight_decay=weight_decay)
 
             for epoch in range(epochs // scale_step):
-                self.forward_pass(layer_idx, channel_idx, optimizer_instance)
+                forward_pass(layer_idx, channel_idx, optimizer_instance)
 
                 # save image
                 if epoch * (step + 1) % 5 == 0:

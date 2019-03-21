@@ -18,7 +18,7 @@ class YOLOv3Visualizer(MultiStepVisualizer):
         """
         super(YOLOv3Visualizer, self).__init__(model, module_list=module_list, cuda=cuda)
 
-    def get_nth_output_layer(self, img, idx):
+    def forward_pass(self, img, idx):
         """
         This function gets the n-th layer output of YOLOv3
         :param img: the input image
@@ -73,8 +73,9 @@ if __name__ == "__main__":
     visualizer = YOLOv3Visualizer(YOLOv3, module_list=yolo_module_list, cuda=True)
     visualizer.multistep_visualize(layer_idx, channel_idx, data_path="multi_vis", learning_rate=lr,
                                    weight_decay=weight_decay, epochs=epochs, scale_step=scale_step,
-                                   initial_size=init_size)
+                                   initial_size=init_size, forward_pass=visualizer.one_pass_neuron)
     visualizer.vanilla_visualize(layer_idx, channel_idx, data_path="vanilla_vis", learning_rate=lr,
-                                 weight_decay=weight_decay, epochs=epochs)
+                                 weight_decay=weight_decay, epochs=epochs,
+                                 forward_pass=visualizer.one_pass_neuron)
     ####
     # visualizer.visualize_whole_layer(10, data_path='visualization', weight_decay=1e-5)
