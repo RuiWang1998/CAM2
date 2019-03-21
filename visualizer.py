@@ -205,13 +205,13 @@ class MultiStepVisualizer:
             self.rm_r_dir(data_path)
 
         img_to_save = self._generate_input_image()
-        save_img(f"{data_path}/layer{layer_idx}/Color/C{channel_idx}S{step_idx}E{epoch_idx}.jpg",
+        save_img(f"{data_path}/layer{layer_idx}/Channel{channel_idx}/Color/S{step_idx}E{epoch_idx}.jpg",
                  img_to_save[id_batch].detach().cpu().permute(1, 2, 0)[:, :, :])
-        save_img(f"{data_path}/layer{layer_idx}/Mono0/C{channel_idx}S{step_idx}E{epoch_idx}.jpg",
+        save_img(f"{data_path}/layer{layer_idx}/Channel{channel_idx}/Mono0/S{step_idx}E{epoch_idx}.jpg",
                  img_to_save[id_batch].detach().cpu().permute(1, 2, 0)[:, :, 0])
-        save_img(f"{data_path}/layer{layer_idx}/Mono1/C{channel_idx}S{step_idx}E{epoch_idx}.jpg",
+        save_img(f"{data_path}/layer{layer_idx}/Channel{channel_idx}/Mono1/S{step_idx}E{epoch_idx}.jpg",
                  img_to_save[id_batch].detach().cpu().permute(1, 2, 0)[:, :, 1])
-        save_img(f"{data_path}/layer{layer_idx}/Mono2/C{channel_idx}S{step_idx}E{epoch_idx}.jpg",
+        save_img(f"{data_path}/layer{layer_idx}/Channel{channel_idx}/Mono2/S{step_idx}E{epoch_idx}.jpg",
                  img_to_save[id_batch].detach().cpu().permute(1, 2, 0)[:, :, 2])
 
     def clear_cuda_memory(self):
