@@ -15,7 +15,7 @@ class MultiStepVisualizer:
     This should serve as a framework for any sort of models and later some other models
     """
 
-    def __init__(self, model, module_list=None, initial_size=56, model_intake_size=416, upscale_step=12,
+    def __init__(self, model, module_list=None, initial_size=56, model_intake_size=416,
                  batch_size=1, channel_num=3, cuda=True):
         """
         This function initializes the visualizer
@@ -41,7 +41,6 @@ class MultiStepVisualizer:
         self.channel_count = []
         self.input_size = model_intake_size
         self.batch_size = batch_size
-        self.upscale_step = upscale_step
         self.channel_num = channel_num  # number of channels in the input image
         self._module_list_to_device()
 
@@ -50,7 +49,6 @@ class MultiStepVisualizer:
         self.init_size = initial_size
         self.new = True
         # get the scale
-        self.upscale_ratio = (self.input_size / initial_size) ** (1 / self.upscale_step)
         if isinstance(model_intake_size, int):
             self.input_generator = nn.UpsamplingNearest2d(size=(model_intake_size, model_intake_size))
         else:
@@ -144,14 +142,15 @@ class MultiStepVisualizer:
         """
         return self.tanh(self.input_generator(self.z_image.to(self.device)))
 
-    def upscale_image(self, mask=True):
+    def upscale_image(self, scale_step, mask=True):
         """
         This function up-scales the current image
         :param mask: if to mask the up-scaled image
+        :param scale_step: the number of steps
         """
-        self.upscale_ratio = (self.input_size / self.init_size) ** (1 / self.upscale_step)
-        self.up_scaler = nn.UpsamplingNearest2d(scale_factor=self.upscale_ratio)
-        z_image = self.up_scaler(self.z_image)
+        scale_ratio = (self.input_size / self.init_size) ** (1 / scale_step)
+        up_scaler = nn.UpsamplingNearest2d(scale_factor=scale_ratio)
+        z_image = up_scaler(self.z_image)
         if mask:
             z_image = z_image + self.noise_gen(z_image.shape[-1])
 
@@ -290,7 +289,8 @@ class MultiStepVisualizer:
         self.save_image(data_path, layer_idx, channel_idx, epochs, step_idx=0)
 
     def multistep_visualize(self, layer_idx, channel_idx, epochs=3, optimizer=optimizers.Adam,
-                            data_path="multi_vis", learning_rate=None, weight_decay=None):
+                            data_path="multi_vis", learning_rate=None, weight_decay=None, scale_step=12,
+                            initial_size=30):
         """
         This function does the visualization
         :param layer_idx: the index of the layer to visualize
@@ -306,16 +306,16 @@ class MultiStepVisualizer:
         if weight_decay is None:
             weight_decay = 0
 
-        self.refresh(self.init_size)
+        self.refresh(initial_size)
 
         print(f"Start to visualize channel {channel_idx} layer {layer_idx} with Multistep")
         self.del_dir(f"{data_path}/layer{layer_idx}/Channel{channel_idx}")
 
-        for step in range(self.upscale_step):
+        for step in range(scale_step):
             # prepares the image
             optimizer_instance = optimizer([self.z_image], lr=learning_rate, weight_decay=weight_decay)
 
-            for epoch in range(epochs // step):
+            for epoch in range(epochs // scale_step):
                 self.forward_pass(layer_idx, channel_idx, optimizer_instance)
 
                 # save image
@@ -327,7 +327,7 @@ class MultiStepVisualizer:
                 self.clear_cuda_memory()
             gc.collect()
             # this should put z_img back to
-            self.upscale_image()
+            self.upscale_image(scale_step)
             # this clears system memory
             gc.collect()
 
