@@ -16,6 +16,7 @@ class YOLOv3Visualizer(MultiStepVisualizer):
         First let us inherit the visualizer
         :param model: the YOLOv3 model pre-trained
         :param cuda: the device to work on
+        :param epochs: number of epochs to run
         """
         super(YOLOv3Visualizer, self).__init__(model, module_list=module_list, cuda=cuda)
 
@@ -42,8 +43,13 @@ class YOLOv3Visualizer(MultiStepVisualizer):
 
 
 if __name__ == "__main__":
-    layer_idx = sys.argv[1] if len(sys.argv) == 3 else 0
-    channel_idx = sys.argv[2] if len(sys.argv) == 3 else 0
+    layer_idx = sys.argv[1]
+    channel_idx = sys.argv[2]
+    epochs = sys.argv[3]
+
+    lr = sys.argv[4]
+    weight_decay = lr / 100
+
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     image_size = 416
     config_path = 'YOLOv3/config/yolov3.cfg'
@@ -58,6 +64,7 @@ if __name__ == "__main__":
     yolo_module_list = list(YOLOv3.children())[0]
 
     visualizer = YOLOv3Visualizer(YOLOv3, module_list=yolo_module_list, cuda=True)
-    visualizer.visualize(layer_idx, channel_idx, data_path='visualization', weight_decay=1e-5)
+    visualizer.visualize(layer_idx, channel_idx, data_path='visualization', learning_rate=lr, weight_decay=1e-5,
+                         epochs=)
     ####
     # visualizer.visualize_whole_layer(10, data_path='visualization', weight_decay=1e-5)
