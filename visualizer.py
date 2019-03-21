@@ -188,9 +188,10 @@ class MultiStepVisualizer:
         except FileNotFoundError:
             pass
 
-    def save_image(self, data_path, layer_idx, channel_idx, epoch_idx, id_batch=0, step_idx=0):
+    def save_image(self, img_idx, data_path, layer_idx, channel_idx, epoch_idx, id_batch=0, step_idx=0):
         """
         This function saves the image
+        :param img_idx: the index of the image
         :param data_path: the data path to save to
         :param layer_idx: the layer index of the images
         :param channel_idx: the channel index of the images
@@ -202,13 +203,13 @@ class MultiStepVisualizer:
         self.mkdir(data_path, layer_idx, channel_idx)
 
         img_to_save = self.generate_input_image()
-        save_img(f"{data_path}/layer{layer_idx}/Channel{channel_idx}/Color/S{step_idx}E{epoch_idx}.jpg",
+        save_img(f"{data_path}/layer{layer_idx}/Channel{channel_idx}/Color/{img_idx}S{step_idx}E{epoch_idx}.jpg",
                  img_to_save[id_batch].detach().cpu().permute(1, 2, 0)[:, :, :])
-        save_img(f"{data_path}/layer{layer_idx}/Channel{channel_idx}/Mono0/S{step_idx}E{epoch_idx}.jpg",
+        save_img(f"{data_path}/layer{layer_idx}/Channel{channel_idx}/Mono0/{img_idx}S{step_idx}E{epoch_idx}.jpg",
                  img_to_save[id_batch].detach().cpu().permute(1, 2, 0)[:, :, 0])
-        save_img(f"{data_path}/layer{layer_idx}/Channel{channel_idx}/Mono1/S{step_idx}E{epoch_idx}.jpg",
+        save_img(f"{data_path}/layer{layer_idx}/Channel{channel_idx}/Mono1/{img_idx}S{step_idx}E{epoch_idx}.jpg",
                  img_to_save[id_batch].detach().cpu().permute(1, 2, 0)[:, :, 1])
-        save_img(f"{data_path}/layer{layer_idx}/Channel{channel_idx}/Mono2/S{step_idx}E{epoch_idx}.jpg",
+        save_img(f"{data_path}/layer{layer_idx}/Channel{channel_idx}/Mono2/{img_idx}S{step_idx}E{epoch_idx}.jpg",
                  img_to_save[id_batch].detach().cpu().permute(1, 2, 0)[:, :, 2])
 
     def clear_cuda_memory(self):
