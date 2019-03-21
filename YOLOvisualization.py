@@ -1,3 +1,5 @@
+import sys
+
 import torch
 
 from YOLOv3.models import Darknet
@@ -40,6 +42,8 @@ class YOLOv3Visualizer(MultiStepVisualizer):
 
 
 if __name__ == "__main__":
+    layer_idx = sys.argv[1]
+    channel_idx = sys.argv[2] if len(sys.argv) == 3 else 0
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     image_size = 416
     config_path = 'YOLOv3/config/yolov3.cfg'
