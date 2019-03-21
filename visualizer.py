@@ -321,9 +321,9 @@ class MultiStepVisualizer:
 
                 # save image
                 if epoch * (step + 1) % 5 == 0:
-                    self.save_image(data_path, epoch * (step + 1), layer_idx, channel_idx, epoch, step_idx=step)
+                    self.save_image(data_path, epochs // scale_step * step + epoch, layer_idx, channel_idx, epoch, step_idx=step)
 
-            self.save_image(data_path, epoch * (step + 1), layer_idx, channel_idx, epochs, step_idx=step)
+            self.save_image(data_path, epochs // scale_step * step + epoch, layer_idx, channel_idx, epochs, step_idx=step)
             if self.cuda:  # this should put self.z_image onto CPU
                 self.clear_cuda_memory()
             gc.collect()
