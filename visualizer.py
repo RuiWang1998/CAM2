@@ -201,7 +201,7 @@ class MultiStepVisualizer:
         :param step_idx: the step index
         :param rm_r: whether to remove everything inside the folder
         """
-        self.mkdir(data_path, layer_idx=layer_idx)
+        self.mkdir(data_path, layer_idx, channel_idx)
         if rm_r:
             self.rm_r_dir(data_path)
 
