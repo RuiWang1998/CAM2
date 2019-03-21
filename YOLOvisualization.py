@@ -47,15 +47,15 @@ if __name__ == "__main__":
     # lr = float(sys.argv[4]) if len(sys.argv) >= 5 else 1e-4
     # weight_decay = lr / 100
 
-    layer_idx = 91
-    channel_idx = 0
-    epochs = 15
+    layer_idx = 101
+    channel_idx = 3
+    epochs = 300
 
     lr = 1e0
     weight_decay = 1e-1
 
     scale_step = 30
-    init_size = 100
+    init_size = 416
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     image_size = 416
