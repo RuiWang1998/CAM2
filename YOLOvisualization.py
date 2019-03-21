@@ -4,7 +4,7 @@ from YOLOv3.models import Darknet
 from visualizer import MultiStepVisualizer
 
 
-class SaveFeatures:
+class GetOutput:
     def __init__(self, module):
         self.hook = module.register_forward_hook(self.hook_fn)
 
@@ -83,9 +83,9 @@ if __name__ == "__main__":
     visualizer = YOLOv3Visualizer(YOLOv3, module_list=yolo_module_list, cuda=True)
     visualizer.multistep_visualize(layer_idx, channel_idx, data_path="multi_vis", learning_rate=lr,
                                    weight_decay=weight_decay, epochs=epochs, scale_step=scale_step,
-                                   initial_size=init_size, forward_pass=visualizer.one_pass_neuron)
+                                   initial_size=init_size, single_pass=visualizer.one_pass_neuron)
     visualizer.vanilla_visualize(layer_idx, channel_idx, data_path="vanilla_vis", learning_rate=lr,
                                  weight_decay=weight_decay, epochs=epochs,
-                                 forward_pass=visualizer.one_pass_neuron)
+                                 single_pass=visualizer.one_pass_neuron)
     ####
     # visualizer.visualize_whole_layer(10, data_path='visualization', weight_decay=1e-5)

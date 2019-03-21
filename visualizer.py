@@ -293,7 +293,7 @@ class MultiStepVisualizer:
         optimizer.step()
 
     def vanilla_visualize(self, layer_idx, channel_idx, epochs, optimizer=optimizers.Adam,
-                          data_path="vanilla_vis", learning_rate=0.001, weight_decay=0, forward_pass=None):
+                          data_path="vanilla_vis", learning_rate=0.001, weight_decay=0, single_pass=None):
         """
         This function performs the vanilla visualization by optimization
         :param layer_idx: the layer index
@@ -303,21 +303,21 @@ class MultiStepVisualizer:
         :param data_path: the data path to store the images
         :param learning_rate: the learning rate
         :param weight_decay: the weight decay, used for regularization
-        :param forward_pass: the function to forward
+        :param single_pass: the function to forward
         """
         self.refresh(self.input_size)
         print(f"Start to visualize channel {channel_idx} layer {layer_idx}")
         self.del_dir(f"{data_path}/layer{layer_idx}/Channel{channel_idx}")
 
-        if forward_pass is None:
-            forward_pass = self.one_pass_channel
+        if single_pass is None:
+            single_pass = self.one_pass_channel
 
         # prepares the image
         optimizer_instance = optimizer([self.z_image], lr=learning_rate, weight_decay=weight_decay)
 
         img_idx = 0
         for epoch in range(epochs):
-            forward_pass(layer_idx, channel_idx, optimizer_instance)
+            single_pass(layer_idx, channel_idx, optimizer_instance)
 
             # save image
             if epoch % 5 == 0:
@@ -329,7 +329,7 @@ class MultiStepVisualizer:
 
     def multistep_visualize(self, layer_idx, channel_idx, epochs=3, optimizer=optimizers.Adam,
                             data_path="multi_vis", learning_rate=0.001, weight_decay=0, scale_step=12,
-                            initial_size=30, forward_pass=None):
+                            initial_size=30, single_pass=None):
         """
         This function does the visualization
         :param layer_idx: the index of the layer to visualize
@@ -340,7 +340,7 @@ class MultiStepVisualizer:
         :param learning_rate: the learning rate of the optimizer
         :param weight_decay: the weight decay of the optimizer
         :param initial_size: the initial input size
-        :param forward_pass: the function that performs the forward pass
+        :param single_pass: the function that performs the forward pass
         """
 
         self.refresh(initial_size)
@@ -348,8 +348,8 @@ class MultiStepVisualizer:
         print(f"Start to visualize channel {channel_idx} layer {layer_idx} with Multistep")
         self.del_dir(f"{data_path}/layer{layer_idx}/Channel{channel_idx}")
 
-        if forward_pass is None:
-            forward_pass = self.one_pass_channel
+        if single_pass is None:
+            single_pass = self.one_pass_channel
 
         img_idx = 0
         for step in range(scale_step):
@@ -357,7 +357,7 @@ class MultiStepVisualizer:
             optimizer_instance = optimizer([self.z_image], lr=learning_rate, weight_decay=weight_decay)
 
             for epoch in range(epochs // scale_step):
-                forward_pass(layer_idx, channel_idx, optimizer_instance)
+                single_pass(layer_idx, channel_idx, optimizer_instance)
 
                 # save image
                 if epoch * (step + 1) % 5 == 0:
