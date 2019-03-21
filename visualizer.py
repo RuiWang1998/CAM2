@@ -188,7 +188,7 @@ class MultiStepVisualizer:
         except FileNotFoundError:
             pass
 
-    def save_image(self, img_idx, data_path, layer_idx, channel_idx, epoch_idx, id_batch=0, step_idx=0):
+    def save_image(self, data_path, img_idx, layer_idx, channel_idx, epoch_idx, id_batch=0, step_idx=0):
         """
         This function saves the image
         :param img_idx: the index of the image
