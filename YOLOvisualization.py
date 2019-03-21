@@ -54,6 +54,9 @@ if __name__ == "__main__":
     lr = 1e0
     weight_decay = 1e-1
 
+    scale_step = 30
+    init_size = 100
+
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     image_size = 416
     config_path = 'YOLOv3/config/yolov3.cfg'
@@ -69,7 +72,8 @@ if __name__ == "__main__":
 
     visualizer = YOLOv3Visualizer(YOLOv3, module_list=yolo_module_list, cuda=True)
     visualizer.multistep_visualize(layer_idx, channel_idx, data_path="multi_vis", learning_rate=lr,
-                                   weight_decay=weight_decay, epochs=epochs)
+                                   weight_decay=weight_decay, epochs=epochs, scale_step=scale_step,
+                                   initial_size=init_size)
     visualizer.vanilla_visualize(layer_idx, channel_idx, data_path="vanilla_vis", learning_rate=lr,
                                  weight_decay=weight_decay, epochs=epochs)
     ####

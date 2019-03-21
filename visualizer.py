@@ -300,6 +300,7 @@ class MultiStepVisualizer:
         :param data_path: the data path to store the images
         :param learning_rate: the learning rate of the optimizer
         :param weight_decay: the weight decay of the optimizer
+        :param initial_size: the initial input size
         """
         if learning_rate is None:
             learning_rate = 0.001
