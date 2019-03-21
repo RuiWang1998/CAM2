@@ -43,11 +43,11 @@ class YOLOv3Visualizer(MultiStepVisualizer):
 
 
 if __name__ == "__main__":
-    layer_idx = int(sys.argv[1]) if len(sys.argv) == 2 else 0
-    channel_idx = int(sys.argv[2]) if len(sys.argv) == 3 else 0
-    epochs = int(sys.argv[3]) if len(sys.argv) == 4 else 30
+    layer_idx = int(sys.argv[1]) if len(sys.argv) >= 2 else 0
+    channel_idx = int(sys.argv[2]) if len(sys.argv) >= 3 else 0
+    epochs = int(sys.argv[3]) if len(sys.argv) >= 4 else 30
 
-    lr = float(sys.argv[4]) if len(sys.argv) == 5 else 1e-4
+    lr = float(sys.argv[4]) if len(sys.argv) >= 5 else 1e-4
     weight_decay = lr / 100
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
