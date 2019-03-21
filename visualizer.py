@@ -139,7 +139,7 @@ class MultiStepVisualizer:
         This function creates an input image for the model
         :return: the input image
         """
-        return self.tanh(self.input_generator(self.z_image).to(self.device))
+        return self.tanh(self.input_generator(self.z_image.to(self.device)))
 
     def upscale_image(self, mask=True):
         """
@@ -150,7 +150,7 @@ class MultiStepVisualizer:
         if mask:
             z_image = z_image + self.noise_gen(z_image.shape[-1])
 
-        self.z_image = z_image.clone().detach().to(self.device).requires_grad_(True)
+        self.z_image = z_image.clone().detach().requires_grad_(True)
 
     @staticmethod
     def mkdir_single(path):
@@ -266,6 +266,7 @@ class MultiStepVisualizer:
             self.save_image(data_path, layer_idx, channel_idx, epochs, step_idx=step)
             if self.cuda:  # this should put self.z_image onto CPU
                 self.clear_cuda_memory()
+            gc.collect()
             # this should put z_img back to
             self.upscale_image()
             # this clears system memory

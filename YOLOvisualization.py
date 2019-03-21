@@ -56,4 +56,4 @@ if __name__ == "__main__":
     visualizer = YOLOv3Visualizer(YOLOv3, module_list=yolo_module_list, cuda=True)
     visualizer.visualize(10, 0, data_path='visualization', weight_decay=1e-5)
     ####
-    visualizer.visualize_whole_layer(10, data_path='visualization', weight_decay=1e-5)
+    # visualizer.visualize_whole_layer(10, data_path='visualization', weight_decay=1e-5)
