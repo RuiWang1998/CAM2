@@ -284,9 +284,9 @@ class MultiStepVisualizer:
 
             # save image
             if epoch % 5 == 0:
-                self.save_image(data_path, layer_idx, channel_idx, epoch)
+                self.save_image(data_path, epoch, layer_idx, channel_idx, epoch)
 
-        self.save_image(data_path, layer_idx, channel_idx, epochs, step_idx=0)
+        self.save_image(data_path, epoch, layer_idx, channel_idx, epochs, step_idx=0)
 
     def multistep_visualize(self, layer_idx, channel_idx, epochs=3, optimizer=optimizers.Adam,
                             data_path="multi_vis", learning_rate=None, weight_decay=None, scale_step=12,
@@ -321,9 +321,9 @@ class MultiStepVisualizer:
 
                 # save image
                 if epoch * (step + 1) % 5 == 0:
-                    self.save_image(data_path, layer_idx, channel_idx, epoch, step_idx=step)
+                    self.save_image(data_path, epoch * (step + 1), layer_idx, channel_idx, epoch, step_idx=step)
 
-            self.save_image(data_path, layer_idx, channel_idx, epochs, step_idx=step)
+            self.save_image(data_path, epoch * (step + 1), layer_idx, channel_idx, epochs, step_idx=step)
             if self.cuda:  # this should put self.z_image onto CPU
                 self.clear_cuda_memory()
             gc.collect()
