@@ -266,11 +266,7 @@ class MultiStepVisualizer:
         optimizer.step()
 
     def vanilla_visualize(self, layer_idx, channel_idx, epochs, optimizer=optimizers.Adam,
-                          data_path="vanilla_vis", learning_rate=None, weight_decay=None):
-        if learning_rate is None:
-            learning_rate = 0.001
-        if weight_decay is None:
-            weight_decay = 0
+                          data_path="vanilla_vis", learning_rate=0.001, weight_decay=0):
 
         self.refresh(self.input_size)
         print(f"Start to visualize channel {channel_idx} layer {layer_idx}")
@@ -292,7 +288,7 @@ class MultiStepVisualizer:
         img_idx += 1
 
     def multistep_visualize(self, layer_idx, channel_idx, epochs=3, optimizer=optimizers.Adam,
-                            data_path="multi_vis", learning_rate=None, weight_decay=None, scale_step=12,
+                            data_path="multi_vis", learning_rate=0.001, weight_decay=0, scale_step=12,
                             initial_size=30):
         """
         This function does the visualization
@@ -305,10 +301,6 @@ class MultiStepVisualizer:
         :param weight_decay: the weight decay of the optimizer
         :param initial_size: the initial input size
         """
-        if learning_rate is None:
-            learning_rate = 0.001
-        if weight_decay is None:
-            weight_decay = 0
 
         self.refresh(initial_size)
 
