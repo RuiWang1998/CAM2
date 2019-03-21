@@ -201,7 +201,6 @@ class MultiStepVisualizer:
         :param epoch_idx: the epoch index this image is from
         :param id_batch: the id in the batch
         :param step_idx: the step index
-        :param rm_r: whether to remove everything inside the folder
         """
 
         self.mkdir(data_path, layer_idx, channel_idx)
@@ -252,8 +251,51 @@ class MultiStepVisualizer:
             self.z_image = self.image_init(self.init_size)
             self.new = 1
 
-    def visualize(self, layer_idx, channel_idx, epochs=3, optimizer=optimizers.Adam,
-                  data_path=".", learning_rate=None, weight_decay=None):
+    def forward_pass(self, layer_idx, channel_idx, optimizer):
+        """
+        This function performs a forward pass
+        :param layer_idx: the layer index
+        :param channel_idx: the channel index
+        :param epoch: the index of the epoch
+        :param optimizer: the optimizer
+        """
+        optimizer.zero_grad()
+
+        img = self.generate_input_image()
+        output = self.get_nth_output_layer(img, layer_idx)
+        output_channels = output.mean(-1).mean(-1).mean(0)
+        activation = - output_channels[channel_idx]
+
+        activation.backward()
+        optimizer.step()
+
+    def vanilla_visualize(self, layer_idx, channel_idx, epochs, optimizer=optimizers.Adam,
+                          data_path=".", learning_rate=None, weight_decay=None):
+        if learning_rate is None:
+            learning_rate = 0.001
+        if weight_decay is None:
+            weight_decay = 0
+
+        self.refresh()
+        print(f"Start to visualize channel {channel_idx} layer {layer_idx}")
+        self.del_dir(f"{data_path}/layer{layer_idx}/Channel{channel_idx}")
+
+        # prepares the image
+        optimizer_instance = optimizer([self.z_image], lr=learning_rate, weight_decay=weight_decay)
+
+        for epoch in range(epochs):
+            optimizer_instance.zero_grad()
+
+            self.forward_pass(layer_idx, channel_idx, optimizer_instance)
+
+            # save image
+            if epoch % 5 == 0:
+                self.save_image(data_path, layer_idx, channel_idx, epoch)
+
+        self.save_image(data_path, layer_idx, channel_idx, epochs, step_idx=0)
+
+    def multistep_visualize(self, layer_idx, channel_idx, epochs=3, optimizer=optimizers.Adam,
+                            data_path=".", learning_rate=None, weight_decay=None):
         """
         This function does the visualization
         :param layer_idx: the index of the layer to visualize
@@ -281,13 +323,8 @@ class MultiStepVisualizer:
             for epoch in range(epochs):
                 optimizer_instance.zero_grad()
 
-                img = self.generate_input_image()
-                output = self.get_nth_output_layer(img, layer_idx)
-                output_channels = output.mean(-1).mean(-1).mean(0)
-                activation = - output_channels[channel_idx]
+                self.forward_pass(layer_idx, channel_idx, optimizer_instance)
 
-                activation.backward()
-                optimizer_instance.step()
                 # save image
                 if epoch == math.floor(epochs / 2):
                     self.save_image(data_path, layer_idx, channel_idx, epoch)
@@ -313,8 +350,8 @@ class MultiStepVisualizer:
         Proceed with caution since Pytorch's GRAM management is not quite as good as the function requires
         """
         for channel_idx in range(self.channel_count[layer_idx]):
-            self.visualize(layer_idx=layer_idx, channel_idx=channel_idx, epochs=epochs, optimizer=optimizer,
-                           data_path=data_path, learning_rate=learning_rate, weight_decay=weight_decay)
+            self.multistep_visualize(layer_idx=layer_idx, channel_idx=channel_idx, epochs=epochs, optimizer=optimizer,
+                                     data_path=data_path, learning_rate=learning_rate, weight_decay=weight_decay)
 
     def visualize_all_model(self, epochs=3, optimizer=optimizers.Adam,
                             data_path="visualization", learning_rate=None, weight_decay=None):

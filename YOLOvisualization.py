@@ -68,7 +68,9 @@ if __name__ == "__main__":
     yolo_module_list = list(YOLOv3.children())[0]
 
     visualizer = YOLOv3Visualizer(YOLOv3, module_list=yolo_module_list, cuda=True)
-    visualizer.visualize(layer_idx, channel_idx, data_path='visualization', learning_rate=lr, weight_decay=1e-5,
-                         epochs=epochs)
+    visualizer.multistep_visualize(layer_idx, channel_idx, data_path='visualization', learning_rate=lr,
+                                   weight_decay=weight_decay, epochs=epochs)
+    visualizer.vanilla_visualize(layer_idx, channel_idx, data_path="vanilla_vis", learning_rate=lr,
+                                 weight_decay=weight_decay, epochs=epochs)
     ####
     # visualizer.visualize_whole_layer(10, data_path='visualization', weight_decay=1e-5)
