@@ -1,6 +1,7 @@
 import gc
 import math
 import os
+import shutil
 
 import torch
 import torch.distributions as distribution
@@ -14,7 +15,7 @@ class MultiStepVisualizer:
     This should serve as a framework for any sort of models and later some other models
     """
 
-    def __init__(self, model, module_list=None, initial_size=30, model_intake_size=416, upscale_step=12,
+    def __init__(self, model, module_list=None, initial_size=56, model_intake_size=416, upscale_step=12,
                  batch_size=1, channel_num=3, cuda=True):
         """
         This function initializes the visualizer
@@ -46,6 +47,8 @@ class MultiStepVisualizer:
 
         self.z_image = self.image_init(initial_size)  # initialize the first image
         self.z_image.requires_grad = True
+        self.init_size = initial_size
+        self.new = True
         # the sampler to generate new images
         self.current_size = initial_size  # the current size of the image
         # get the scale
@@ -93,15 +96,19 @@ class MultiStepVisualizer:
         """
         return torch.nn.Tanh()(scaling * x) / 2 + 0.5
 
-    def random_init(self, image_size, mean=0, std=1):
+    def random_init(self, image_size, mean=0, std=1, normal=True):
         """
         This function initializes a new original image
         :param image_size: the image size of the model
         :param mean: the mean of the distribution
         :param std: the standard deviation of the distribution
+        :param normal: if normal distribution
         :return: the image initialized
         """
-        sampler = distribution.Normal(self.cast(mean), self.cast(std))
+        if normal:
+            sampler = distribution.Normal(self.cast(mean), self.cast(std))
+        else:
+            sampler = distribution.Uniform(-1.5, 1.5)
 
         if not isinstance(image_size, list):
             size = torch.Size([self.batch_size, self.channel_num, image_size, image_size])
@@ -110,7 +117,7 @@ class MultiStepVisualizer:
 
         return sampler.sample(size)
 
-    def noise_gen(self, image_size, noise_ratio=0.1, mean=0, std=1):
+    def noise_gen(self, image_size, noise_ratio=0.05, mean=0, std=1):
         """
         This function allows to create a mask onto
         :param self: the class itself
@@ -129,12 +136,12 @@ class MultiStepVisualizer:
         :param image_size: the image size of the model
         :return: the random mask
         """
-        image = self.random_init(image_size)
+        image = self.random_init(image_size, normal=False)
         image.require_grad = True
 
         return image
 
-    def _generate_input_image(self):
+    def generate_input_image(self):
         """
         This function creates an input image for the model
         :return: the input image
@@ -179,18 +186,13 @@ class MultiStepVisualizer:
         self.mkdir_single(f"{data_path}/layer{layer_idx}/Channel{channel_idx}/Mono2")
 
     @staticmethod
-    def rm_r_dir(data_path):
-        folder = data_path
-        for the_file in os.listdir(folder):
-            file_path = os.path.join(folder, the_file)
-            try:
-                if os.path.isfile(file_path):
-                    os.unlink(file_path)
-                # elif os.path.isdir(file_path): shutil.rmtree(file_path)
-            except Exception as e:
-                print(e)
+    def del_dir(data_path):
+        try:
+            shutil.rmtree(data_path)
+        except FileNotFoundError:
+            pass
 
-    def save_image(self, data_path, layer_idx, channel_idx, epoch_idx, id_batch=0, step_idx=0, rm_r=True):
+    def save_image(self, data_path, layer_idx, channel_idx, epoch_idx, id_batch=0, step_idx=0):
         """
         This function saves the image
         :param data_path: the data path to save to
@@ -201,11 +203,10 @@ class MultiStepVisualizer:
         :param step_idx: the step index
         :param rm_r: whether to remove everything inside the folder
         """
-        self.mkdir(data_path, layer_idx, channel_idx)
-        if rm_r:
-            self.rm_r_dir(data_path)
 
-        img_to_save = self._generate_input_image()
+        self.mkdir(data_path, layer_idx, channel_idx)
+
+        img_to_save = self.generate_input_image()
         save_img(f"{data_path}/layer{layer_idx}/Channel{channel_idx}/Color/S{step_idx}E{epoch_idx}.jpg",
                  img_to_save[id_batch].detach().cpu().permute(1, 2, 0)[:, :, :])
         save_img(f"{data_path}/layer{layer_idx}/Channel{channel_idx}/Mono0/S{step_idx}E{epoch_idx}.jpg",
@@ -244,6 +245,13 @@ class MultiStepVisualizer:
                 return img
         return img
 
+    def refresh(self):
+        if not self.new:
+            del self.z_image
+            gc.collect()
+            self.z_image = self.image_init(self.init_size)
+            self.new = 1
+
     def visualize(self, layer_idx, channel_idx, epochs=3, optimizer=optimizers.Adam,
                   data_path=".", learning_rate=None, weight_decay=None):
         """
@@ -261,7 +269,10 @@ class MultiStepVisualizer:
         if weight_decay is None:
             weight_decay = 0
 
-        print(f"Start to visualize layer {layer_idx}")
+        self.refresh()
+
+        print(f"Start to visualize channel {channel_idx} layer {layer_idx}")
+        self.del_dir(f"{data_path}/layer{layer_idx}/Channel{channel_idx}")
 
         for step in range(self.upscale_step):
             # prepares the image
@@ -270,7 +281,7 @@ class MultiStepVisualizer:
             for epoch in range(epochs):
                 optimizer_instance.zero_grad()
 
-                img = self._generate_input_image()
+                img = self.generate_input_image()
                 output = self.get_nth_output_layer(img, layer_idx)
                 output_channels = output.mean(-1).mean(-1).mean(0)
                 activation = - output_channels[channel_idx]
@@ -293,6 +304,8 @@ class MultiStepVisualizer:
         if self.cuda:
             self.clear_cuda_memory()
 
+        self.new = False
+
     def visualize_whole_layer(self, layer_idx, epochs=3, optimizer=optimizers.Adam,
                               data_path=".", learning_rate=None, weight_decay=None):
         """
@@ -304,7 +317,7 @@ class MultiStepVisualizer:
                            data_path=data_path, learning_rate=learning_rate, weight_decay=weight_decay)
 
     def visualize_all_model(self, epochs=3, optimizer=optimizers.Adam,
-                            data_path=".", learning_rate=None, weight_decay=None):
+                            data_path="visualization", learning_rate=None, weight_decay=None):
         """
         This function allows to visualize all the channels in a model
         Proceed with caution since Pytorch's GRAM management is not quite as good as the function requires
