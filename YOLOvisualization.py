@@ -4,6 +4,17 @@ from YOLOv3.models import Darknet
 from visualizer import MultiStepVisualizer
 
 
+class SaveFeatures:
+    def __init__(self, module):
+        self.hook = module.register_forward_hook(self.hook_fn)
+
+    def hook_fn(self, module, input, output):
+        self.features = torch.tensor(output, requires_grad=True).cuda()
+
+    def close(self):
+        self.hook.remove()
+
+
 class YOLOv3Visualizer(MultiStepVisualizer):
     """
     This is a class that allows for some modifications for YOLOv3
@@ -14,7 +25,6 @@ class YOLOv3Visualizer(MultiStepVisualizer):
         First let us inherit the visualizer
         :param model: the YOLOv3 model pre-trained
         :param cuda: the device to work on
-        :param epochs: number of epochs to run
         """
         super(YOLOv3Visualizer, self).__init__(model, module_list=module_list, cuda=cuda)
 

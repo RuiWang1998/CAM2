@@ -58,7 +58,7 @@ class MultiStepVisualizer:
         This function counts the number of channels in each layer
         Note that for any model with residue network, we have to overload this method
         """
-        place_holder = self.random_init(self.input_size)
+        place_holder = self.random_init(self.input_size).to(self.device)
         for i, layer in enumerate(self.module_list):
             self.forward_pass(place_holder, i)
             self.module_list[i] = layer.to(self.device)
@@ -68,6 +68,9 @@ class MultiStepVisualizer:
                 self.channel_count.append(output_shape[1])
             except NotImplementedError:
                 self.channel_count.append(0)
+
+        del place_holder
+        self.clear_cuda_memory()
 
     @staticmethod
     def cast(value, d_type=torch.float32):
