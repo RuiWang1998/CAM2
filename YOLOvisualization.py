@@ -51,8 +51,8 @@ if __name__ == "__main__":
     channel_idx = 3
     epochs = 300
 
-    lr = 1e0
-    weight_decay = 1e-1
+    lr = 1e-2
+    weight_decay = 0
 
     scale_step = 30
     init_size = 416

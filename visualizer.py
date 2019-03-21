@@ -49,9 +49,9 @@ class MultiStepVisualizer:
         self.new = True
         # get the scale
         if isinstance(model_intake_size, int):
-            self.input_generator = nn.UpsamplingNearest2d(size=(model_intake_size, model_intake_size))
+            self.input_generator = nn.UpsamplingBilinear2d(size=(model_intake_size, model_intake_size))
         else:
-            self.input_generator = nn.UpsamplingNearest2d(size=model_intake_size)
+            self.input_generator = nn.UpsamplingBilinear2d(size=model_intake_size)
 
     def _module_list_to_device(self):
         """
