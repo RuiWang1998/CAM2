@@ -177,7 +177,19 @@ class MultiStepVisualizer:
         self.mkdir_single(f"{data_path}/layer{layer_idx}/Mono1")
         self.mkdir_single(f"{data_path}/layer{layer_idx}/Mono2")
 
-    def save_image(self, data_path, layer_idx, channel_idx, epoch_idx, id_batch=0, step_idx=0):
+    @staticmethod
+    def rm_r_dir(data_path):
+        folder = data_path
+        for the_file in os.listdir(folder):
+            file_path = os.path.join(folder, the_file)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+                # elif os.path.isdir(file_path): shutil.rmtree(file_path)
+            except Exception as e:
+                print(e)
+
+    def save_image(self, data_path, layer_idx, channel_idx, epoch_idx, id_batch=0, step_idx=0, rm_r=True):
         """
         This function saves the image
         :param data_path: the data path to save to
@@ -186,8 +198,11 @@ class MultiStepVisualizer:
         :param epoch_idx: the epoch index this image is from
         :param id_batch: the id in the batch
         :param step_idx: the step index
+        :param rm_r: whether to remove everything inside the folder
         """
         self.mkdir(data_path, layer_idx=layer_idx)
+        if rm_r:
+            self.rm_r_dir(data_path)
 
         img_to_save = self._generate_input_image()
         save_img(f"{data_path}/layer{layer_idx}/Color/C{channel_idx}S{step_idx}E{epoch_idx}.jpg",
@@ -244,6 +259,8 @@ class MultiStepVisualizer:
             learning_rate = 0.001
         if weight_decay is None:
             weight_decay = 0
+
+        print(f"Start to visualize layer {layer_idx}")
 
         for step in range(self.upscale_step):
             # prepares the image

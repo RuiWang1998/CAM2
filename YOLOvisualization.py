@@ -19,14 +19,14 @@ class YOLOv3Visualizer(MultiStepVisualizer):
         """
         super(YOLOv3Visualizer, self).__init__(model, module_list=module_list, cuda=cuda)
 
-    def get_nth_output_layer(self, img, layer_idx):
+    def get_nth_output_layer(self, img, idx):
         """
         This function gets the n-th layer output of YOLOv3
         :param img: the input image
-        :param layer_idx: the index of the layer
+        :param idx: the index of the layer
         :return: the output of the specific layer
         """
-        return self.model(img, layer_idx=[layer_idx])[layer_idx]
+        return self.model(img, layer_idx=[idx])[idx]
 
     def _module_list_to_device(self):
         """
@@ -42,7 +42,7 @@ class YOLOv3Visualizer(MultiStepVisualizer):
 
 
 if __name__ == "__main__":
-    layer_idx = sys.argv[1]
+    layer_idx = sys.argv[1] if len(sys.argv) == 3 else 0
     channel_idx = sys.argv[2] if len(sys.argv) == 3 else 0
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     image_size = 416
@@ -58,6 +58,6 @@ if __name__ == "__main__":
     yolo_module_list = list(YOLOv3.children())[0]
 
     visualizer = YOLOv3Visualizer(YOLOv3, module_list=yolo_module_list, cuda=True)
-    visualizer.visualize(10, 0, data_path='visualization', weight_decay=1e-5)
+    visualizer.visualize(layer_idx, channel_idx, data_path='visualization', weight_decay=1e-5)
     ####
     # visualizer.visualize_whole_layer(10, data_path='visualization', weight_decay=1e-5)
