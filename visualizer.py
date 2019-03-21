@@ -248,19 +248,24 @@ class MultiStepVisualizer:
             self.z_image = self.image_init(size)
             self.new = 1
 
-    def one_pass_neuron(self, layer_idx, channel_idx, neuron_x, neuron_y, optimizer):
+    def one_pass_neuron(self, layer_idx, channel_idx, optimizer, neuron_x=0, neuron_y=0):
         """
         This function does the one pass on a neuron
         :param layer_idx: the layer index of the neuron
         :param channel_idx: the channel index of the neuron
         :param neuron_x: the x coordinate of the neuron
         :param neuron_y: the y coordinate of the neuron
-        :param optimizer: the optimzer
+        :param optimizer: the optimizer
         """
         optimizer.zero_grad()
 
         img = self.generate_input_image()
         output = self.forward_pass(img, layer_idx)
+        _, _, x, y = output.shape
+        if neuron_x > x:
+            neuron_x = x
+        if neuron_y > y:
+            neuron_y = y
         activation = output.mean(0)[channel_idx, neuron_x, neuron_y]
         loss = - activation
 
