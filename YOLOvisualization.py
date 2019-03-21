@@ -47,9 +47,9 @@ if __name__ == "__main__":
     # lr = float(sys.argv[4]) if len(sys.argv) >= 5 else 1e-4
     # weight_decay = lr / 100
 
-    layer_idx = 1
-    channel_idx = 6
-    epochs = 30
+    layer_idx = 91
+    channel_idx = 0
+    epochs = 15
 
     lr = 1e0
     weight_decay = 1e-1

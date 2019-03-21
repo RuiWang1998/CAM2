@@ -49,16 +49,12 @@ class MultiStepVisualizer:
         self.z_image.requires_grad = True
         self.init_size = initial_size
         self.new = True
-        # the sampler to generate new images
-        self.current_size = initial_size  # the current size of the image
         # get the scale
         self.upscale_ratio = (self.input_size / initial_size) ** (1 / self.upscale_step)
         if isinstance(model_intake_size, int):
             self.input_generator = nn.UpsamplingNearest2d(size=(model_intake_size, model_intake_size))
         else:
             self.input_generator = nn.UpsamplingNearest2d(size=model_intake_size)
-
-        self.up_scaler = nn.UpsamplingNearest2d(scale_factor=self.upscale_ratio)
 
     def _module_list_to_device(self):
         """
@@ -117,7 +113,7 @@ class MultiStepVisualizer:
 
         return sampler.sample(size)
 
-    def noise_gen(self, image_size, noise_ratio=0.05, mean=0, std=1):
+    def noise_gen(self, image_size, noise_ratio=0.1, mean=0, std=1):
         """
         This function allows to create a mask onto
         :param self: the class itself
@@ -153,6 +149,8 @@ class MultiStepVisualizer:
         This function up-scales the current image
         :param mask: if to mask the up-scaled image
         """
+        self.upscale_ratio = (self.input_size / self.init_size) ** (1 / self.upscale_step)
+        self.up_scaler = nn.UpsamplingNearest2d(scale_factor=self.upscale_ratio)
         z_image = self.up_scaler(self.z_image)
         if mask:
             z_image = z_image + self.noise_gen(z_image.shape[-1])
@@ -317,7 +315,7 @@ class MultiStepVisualizer:
             # prepares the image
             optimizer_instance = optimizer([self.z_image], lr=learning_rate, weight_decay=weight_decay)
 
-            for epoch in range(epochs):
+            for epoch in range(epochs // step):
                 self.forward_pass(layer_idx, channel_idx, optimizer_instance)
 
                 # save image
