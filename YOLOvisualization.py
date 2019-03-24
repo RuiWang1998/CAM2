@@ -14,7 +14,6 @@ class YOLOv3Visualizer(MultiStepVisualizer):
         First let us inherit the visualizer
         :param model: the YOLOv3 model pre-trained
         :param cuda: the device to work on
-        :param epochs: number of epochs to run
         """
         super(YOLOv3Visualizer, self).__init__(model, module_list=module_list, cuda=cuda)
 
@@ -76,6 +75,6 @@ if __name__ == "__main__":
                                    initial_size=init_size, forward_pass=visualizer.one_pass_neuron)
     visualizer.vanilla_visualize(layer_idx, channel_idx, data_path="vanilla_vis", learning_rate=lr,
                                  weight_decay=weight_decay, epochs=epochs,
-                                 forward_pass=visualizer.one_pass_neuron)
+                                 single_pass=visualizer.one_pass_neuron)
     ####
     # visualizer.visualize_whole_layer(10, data_path='visualization', weight_decay=1e-5)
