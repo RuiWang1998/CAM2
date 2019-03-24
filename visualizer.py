@@ -110,7 +110,7 @@ class MultiStepVisualizer:
 
         return sampler.sample(size)
 
-    def noise_gen(self, image_size, noise_ratio=0.1, mean=0, std=1):
+    def noise_gen(self, image_size, noise_ratio=0.2, mean=0, std=1):
         """
         This function allows to create a mask onto
         :param self: the class itself
@@ -120,7 +120,7 @@ class MultiStepVisualizer:
         :param std: the standard deviation of the distribution
         :return: the random mask
         """
-        return self.random_init(image_size, mean, std) * noise_ratio
+        return self.random_init(image_size, mean, std, normal=False) * noise_ratio
 
     def image_init(self, image_size):
         """
