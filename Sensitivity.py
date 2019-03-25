@@ -6,7 +6,6 @@ class SensitivityMeasurer:
     This class serves as a sensitivity measurer that has two metrics from the paper
     Sensitivity and Generalization in Neural Networks: an Empirical Study
     """
-
     def __init__(self, model, module_list=None, cuda=True, model_intake_size=416, batch_size=1, channel_num=3):
         """
         This function initializes the object
@@ -37,6 +36,7 @@ class SensitivityMeasurer:
             self.height = model_intake_size
         else:
             self.width, self.height = model_intake_size
+        self.channel_num = channel_num
 
     def get_n_th_layer_act_core(self, img, layer_idx):
         """
