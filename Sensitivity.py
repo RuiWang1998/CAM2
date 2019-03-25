@@ -1,3 +1,5 @@
+import gc
+
 import torch
 
 
@@ -23,13 +25,19 @@ class SensitivityMeasurer:
         # get the models and module list
         if model is not None:
             self.model = model.to(self.device)
+            self.model.eval()
         if module_list is not None:
             self.module_list = module_list
         else:
             self.module_list = list(model.children())
+        for i, layer in enumerate(self.module_list):
+            self.module_list[i] = layer.to(self.device)
 
         self.layer_num = len(self.module_list)  # the number of layers of the model
         self.channel_count = []  # the number of channels of each layer
+        self.size_count = []  # elements of format [[height, width]]
+        self._module_list_channel_count()
+
         self.batch_size = batch_size  # the batch size of the input to the model
         if isinstance(model_intake_size, int):
             self.width = model_intake_size
@@ -38,13 +46,37 @@ class SensitivityMeasurer:
             self.width, self.height = model_intake_size
         self.channel_num = channel_num
 
-    def get_n_th_layer_act_core(self, img, layer_idx):
+        gc.collect()
+        torch.cuda.empty_cache()
+
+    def _module_list_channel_count(self):
+        """
+        This function counts the number of channels in each layer
+        Note that for any model with residue network, we have to overload this method
+        """
+        place_holder = torch.randn(self.batch_size, self.channel_num,
+                                   self.height, self.width).to(self.device)
+        for i, layer in enumerate(self.module_list):
+            self.size_count.append([])
+            self.get_n_th_layer(place_holder, i)
+            self.module_list[i] = layer.to(self.device)
+            try:
+                place_holder = self.module_list[i](place_holder)
+                output_shape = place_holder.shape
+                self.channel_count.append(output_shape[1])
+                for channel_idx in range(output_shape[1]):
+                    self.size_count[-1].append(output_shape[2:])
+            except NotImplementedError:
+                self.channel_count.append(0)
+
+    def get_n_th_layer_core(self, img, layer_idx):
         """
         This function gets the nth layer output
         :param img: the input image
         :param layer_idx: the layer index of interest
         :return: the output at that layer
         """
+        img = img.to(self.device)
         for i, layer in enumerate(self.module_list):
             try:
                 img = layer(img)
@@ -69,7 +101,7 @@ class SensitivityMeasurer:
         if reduction_type == 'sum':
             return reduction_tensor.sum()
 
-    def get_n_th_layer_act(self, img, layer_idx, reduction=None):
+    def get_n_th_layer(self, img, layer_idx, reduction=None):
         """
         This function wraps around the get_n_th_layer_act_core function to introduce the ability of reduction
         :param img: the input image
@@ -77,7 +109,7 @@ class SensitivityMeasurer:
         :param reduction: the reduction method, one of 'sum' or 'mean'
         :return: the n-th layer's activation
         """
-        return self.reduction(self.get_n_th_layer_act_core(img, layer_idx), reduction)
+        return self.reduction(self.get_n_th_layer_core(img, layer_idx), reduction)
 
     def get_nth_channel(self, img, layer_idx, channel_idx, reduction=None):
         """
@@ -88,7 +120,7 @@ class SensitivityMeasurer:
         :param reduction: the reduction method, one of 'sum' or 'mean'
         :return: the n-th channel output
         """
-        return self.reduction(self.get_n_th_layer_act(img, layer_idx)[:, channel_idx, :, :], reduction)
+        return self.reduction(self.get_n_th_layer(img, layer_idx)[:, channel_idx, :, :], reduction)
 
     def get_nth_neuron(self, img, layer_idx, channel_idx, neuron_idx):
         """
@@ -105,12 +137,65 @@ class SensitivityMeasurer:
             x_idx = y_idx = neuron_idx
         return self.get_nth_channel(img, layer_idx, channel_idx, reduction=None)[x_idx, y_idx]
 
+    def compute_neuron_jacobian(self, inputs, layer_idx, channel_idx, neuron_idx):
+        """
+        This function computes the Jacobian of one neuron's activation
+        :param inputs: the variables of the Jacobian
+        :param layer_idx: the index of the layer of interest
+        :param channel_idx: the index of the channel of interest
+        :param neuron_idx: the place of the neuron
+        :return: the Jacobian vector
+        """
+        inputs.requires_grad = True  # make sure that the input is tracked
+        activation = self.get_nth_neuron(inputs, layer_idx, channel_idx, neuron_idx)  # a forward pass
+        activation.backward()  # backward pass that computes the gradient
+        return inputs.grad
+
+    def compute_channel_jacobian(self, inputs, layer_idx, channel_idx):
+        """
+        This function computes the Jacobian of one channel of designated layer
+        :param inputs: the variables of the Jacobian
+        :param layer_idx: the index of the layer of interest
+        :param channel_idx: the index of the channel of interest
+        :return: the Jacobian matrix of that channel
+        """
+        height, width = self.size_count[layer_idx][channel_idx]
+        outputs = []
+        for width_i in range(width):
+            for height_i in range(height):
+                outputs.append(self.compute_neuron_jacobian(inputs, layer_idx, channel_idx, [height_i, width_i]))
+
+        return torch.stack(tuple(outputs))
+
+    def compute_layer_jacobian(self, inputs, layer_idx):
+        """
+        This function computes the Jacobian of one layer
+        :param inputs: the variables of the Jacobian
+        :param layer_idx: the layer of interest
+        :return: the Jacobian
+        """
+        channel_count = self.channel_num[layer_idx]
+        outputs = []
+        for channel_i in range(channel_count):
+            outputs.append(self.compute_channel_jacobian(inputs, layer_idx, channel_i))
+
+        return torch.stack(tuple(outputs))
+
     def compute_jacobian(self, inputs, outputs):
         """
         This function computes the jacobian of the output of interest w.r.t. the input of interest
         :param inputs: the input of interest
-        :param outputs: the outputs of interest
+        :param outputs: the outputs of interest, of type list or tuple,
+                                of the format [layer_idx, channel_idx, neuron_idx]
         :return: the jacobian matrix (or vector)
         """
         # TODO: Think about how to compute the jacobian more
-        pass
+        if len(outputs) == 3:
+            # here implements the jacobian of a neuron
+            return self.compute_neuron_jacobian(inputs, *outputs)
+        if len(outputs) == 2:
+            # here implements the jacobian of a channel
+            return self.compute_channel_jacobian(inputs, *outputs)
+        if len(outputs) == 1:
+            # here implements the jacobian of a layer
+            return self.compute_layer_jacobian(inputs, *outputs)

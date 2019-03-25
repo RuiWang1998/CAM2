@@ -26,7 +26,7 @@ class YOLOv3Visualizer(Visualizer):
         """
         return self.model(img, layer_idx=[idx])[idx]
 
-    def _module_list_to_device(self):
+    def _module_list_channel_count(self):
         """
         This overloads the module list method, which modifies the self.channel_count
         """

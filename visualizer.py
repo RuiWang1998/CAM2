@@ -40,7 +40,7 @@ class Visualizer:
         self.input_size = model_intake_size
         self.batch_size = batch_size
         self.channel_num = channel_num  # number of channels in the input image
-        self._module_list_to_device()
+        self._module_list_channel_count()
 
         self.z_image = self.image_init(initial_size)  # initialize the first image
         self.z_image.requires_grad = True
@@ -52,7 +52,7 @@ class Visualizer:
         else:
             self.input_generator = nn.UpsamplingBilinear2d(size=model_intake_size)
 
-    def _module_list_to_device(self):
+    def _module_list_channel_count(self):
         """
         This function counts the number of channels in each layer
         Note that for any model with residue network, we have to overload this method
