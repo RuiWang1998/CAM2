@@ -174,7 +174,7 @@ class SensitivityMeasurer:
         :param layer_idx: the layer of interest
         :return: the Jacobian
         """
-        channel_count = self.channel_num[layer_idx]
+        channel_count = self.channel_count[layer_idx]
         outputs = []
         for channel_i in range(channel_count):
             outputs.append(self.compute_channel_jacobian(inputs, layer_idx, channel_i))
@@ -189,7 +189,7 @@ class SensitivityMeasurer:
                                 of the format [layer_idx, channel_idx, neuron_idx]
         :return: the jacobian matrix (or vector)
         """
-        # TODO: Think about how to compute the jacobian more
+        # TODO: Think about how to efficiently compute the jacobian
         if len(outputs) == 3:
             # here implements the jacobian of a neuron
             return self.compute_neuron_jacobian(inputs, *outputs)
