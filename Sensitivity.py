@@ -104,3 +104,13 @@ class SensitivityMeasurer:
         else:
             x_idx = y_idx = neuron_idx
         return self.get_nth_channel(img, layer_idx, channel_idx, reduction=None)[x_idx, y_idx]
+
+    def compute_jacobian(self, inputs, outputs):
+        """
+        This function computes the jacobian of the output of interest w.r.t. the input of interest
+        :param inputs: the input of interest
+        :param outputs: the outputs of interest
+        :return: the jacobian matrix (or vector)
+        """
+        # TODO: Think about how to compute the jacobian more
+        pass
