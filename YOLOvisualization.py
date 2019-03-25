@@ -1,10 +1,10 @@
 import torch
 
 from YOLOv3.models import Darknet
-from visualizer import MultiStepVisualizer
+from visualizer import Visualizer
 
 
-class YOLOv3Visualizer(MultiStepVisualizer):
+class YOLOv3Visualizer(Visualizer):
     """
     This is a class that allows for some modifications for YOLOv3
     """
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     epochs = 300
 
     lr = 1e-2
-    weight_decay = 0
+    weight_decay = 1e-5
 
     scale_step = 30
     init_size = 416

@@ -9,7 +9,7 @@ import torch.optim as optimizers
 from scipy.misc import imsave as save_img
 
 
-class MultiStepVisualizer:
+class Visualizer:
     """
     This should serve as a framework for any sort of models and later some other models
     """
@@ -21,7 +21,6 @@ class MultiStepVisualizer:
         :param module_list: the module list from the model
         :param initial_size: the initial image size
         :param model_intake_size: the model's input image size
-        :param upscale_step: the number of steps to take to upscale an image
         :param batch_size: the batch size of the image to optimize
         :param channel_num: the number of channels
         :param cuda: the device to put the model and data on
