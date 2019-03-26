@@ -19,7 +19,7 @@ class SensitivityMeasurer:
         :param channel_num: the number of input channel
         """
         # check if use cuda
-        self.cuda = cuda and torch.cuda.is_avaiable()
+        self.cuda = cuda and torch.cuda.is_available()
         self.device = torch.device('cuda:0' if self.cuda else 'cpu')
 
         # get the models and module list
@@ -36,15 +36,16 @@ class SensitivityMeasurer:
         self.layer_num = len(self.module_list)  # the number of layers of the model
         self.channel_count = []  # the number of channels of each layer
         self.size_count = []  # elements of format [[height, width]]
-        self._module_list_channel_count()
-
         self.batch_size = batch_size  # the batch size of the input to the model
+        self.channel_num = channel_num
+
         if isinstance(model_intake_size, int):
             self.width = model_intake_size
             self.height = model_intake_size
         else:
             self.width, self.height = model_intake_size
-        self.channel_num = channel_num
+
+        self._module_list_channel_count()
 
         gc.collect()
         torch.cuda.empty_cache()
@@ -54,20 +55,19 @@ class SensitivityMeasurer:
         This function counts the number of channels in each layer
         Note that for any model with residue network, we have to overload this method
         """
-        place_holder = torch.randn(self.batch_size, self.channel_num,
-                                   self.height, self.width).to(self.device)
         for i, layer in enumerate(self.module_list):
-            self.size_count.append([])
-            self.get_n_th_layer(place_holder, i)
+            place_holder = torch.randn(self.batch_size, self.channel_num,
+                                       self.height, self.width).to(self.device)
+            self.size_count.append(0)
             self.module_list[i] = layer.to(self.device)
             try:
                 place_holder = self.module_list[i](place_holder)
                 output_shape = place_holder.shape
                 self.channel_count.append(output_shape[1])
                 for channel_idx in range(output_shape[1]):
-                    self.size_count[-1].append(output_shape[2:])
+                    self.size_count[-1] = output_shape[2:]
             except NotImplementedError:
-                self.channel_count.append(0)
+                self.size_count[-1].append([0, 0])
 
     def get_n_th_layer_core(self, img, layer_idx):
         """
