@@ -135,7 +135,7 @@ class SensitivityMeasurer:
             x_idx, y_idx = neuron_idx
         else:
             x_idx = y_idx = neuron_idx
-        return self.get_nth_channel(img, layer_idx, channel_idx, reduction=None)[x_idx, y_idx]
+        return self.get_nth_channel(img, layer_idx, channel_idx, reduction=None)[:, x_idx, y_idx]
 
     def compute_neuron_jacobian(self, inputs, layer_idx, channel_idx, neuron_idx):
         """
@@ -159,7 +159,7 @@ class SensitivityMeasurer:
         :param channel_idx: the index of the channel of interest
         :return: the Jacobian matrix of that channel
         """
-        height, width = self.size_count[layer_idx][channel_idx]
+        height, width = self.size_count[layer_idx]
         outputs = []
         for width_i in range(width):
             for height_i in range(height):

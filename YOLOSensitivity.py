@@ -48,4 +48,5 @@ if __name__ == '__main__':
     yolo_module_list = list(YOLOv3.children())[0]
     place_holder = torch.randn(1, 3, 416, 416).to(device)
     measurer = YOLOMeasurer(YOLOv3, yolo_module_list)
-    measurer.get_nth_neuron(place_holder, 1, 0, 0)
+    measurer.get_nth_neuron(place_holder, 1, 0, 0).shape
+    measurer.compute_channel_jacobian(place_holder, 1, 0).shape
