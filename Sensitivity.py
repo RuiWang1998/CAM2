@@ -55,9 +55,9 @@ class SensitivityMeasurer:
         This function counts the number of channels in each layer
         Note that for any model with residue network, we have to overload this method
         """
+        place_holder = torch.randn(self.batch_size, self.channel_num,
+                                   self.height, self.width).to(self.device)
         for i, layer in enumerate(self.module_list):
-            place_holder = torch.randn(self.batch_size, self.channel_num,
-                                       self.height, self.width).to(self.device)
             self.size_count.append(0)
             self.module_list[i] = layer.to(self.device)
             try:
@@ -67,7 +67,7 @@ class SensitivityMeasurer:
                 for channel_idx in range(output_shape[1]):
                     self.size_count[-1] = output_shape[2:]
             except NotImplementedError:
-                self.size_count[-1].append([0, 0])
+                self.size_count[-1] = torch.Size([0, 0])
 
     def get_n_th_layer_core(self, img, layer_idx):
         """

@@ -18,6 +18,21 @@ class YOLOMeasurer(SensitivityMeasurer):
         """
         super(YOLOMeasurer, self).__init__(model, module_list, cuda=cuda)
 
+    def _module_list_channel_count(self):
+        """
+        This overloads the module list method, which modifies the self.channel_count
+        """
+        place_holder = torch.randn(self.batch_size, self.channel_num,
+                                   self.height, self.width).to(self.device)
+        outputs = self.model(place_holder, layer_idx=list(range(self.layer_num)))
+        self.layer_num = len(set(outputs.values()))
+        self.channel_count = [output.shape[1] for output in outputs.values()]
+        self.size_count = [output.shape[2:] for output in outputs.values()]
+        self.size_count[-1] = torch.Size([0, 0])
+        del place_holder
+        if self.cuda:
+            torch.cuda.empty_cache()
+
 
 if __name__ == '__main__':
     config_path = 'YOLOv3/config/yolov3.cfg'
