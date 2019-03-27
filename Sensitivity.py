@@ -159,13 +159,16 @@ class SensitivityMeasurer:
         :param channel_idx: the index of the channel of interest
         :return: the Jacobian matrix of that channel
         """
+        inputs.requires_grad = True
         height, width = self.size_count[layer_idx]
-        outputs = []
+        outputs = self.get_nth_channel(inputs, layer_idx, channel_idx)
+        Jacobian = []
         for width_i in range(width):
             for height_i in range(height):
-                outputs.append(self.compute_neuron_jacobian(inputs, layer_idx, channel_idx, [height_i, width_i]))
+                outputs[:, height_i, width_i].backward(retain_graph=True)
+                Jacobian.append(inputs.grad)
 
-        return torch.stack(tuple(outputs))
+        return Jacobian
 
     def compute_layer_jacobian(self, inputs, layer_idx):
         """
