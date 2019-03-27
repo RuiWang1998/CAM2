@@ -178,11 +178,16 @@ class SensitivityMeasurer:
         :return: the Jacobian
         """
         channel_count = self.channel_count[layer_idx]
-        outputs = []
+        height, width = self.size_count[layer_idx]
+        outputs = self.get_n_th_layer(inputs, layer_idx)
+        Jacobian = []
         for channel_i in range(channel_count):
-            outputs.append(self.compute_channel_jacobian(inputs, layer_idx, channel_i))
+            for width_i in range(width):
+                for height_i in range(height):
+                    outputs[:, channel_i, height_i, width_i].backward(retain_graph=True)
+                    Jacobian.append(inputs.grad)
 
-        return torch.stack(tuple(outputs))
+        return Jacobian
 
     def compute_jacobian(self, inputs, outputs):
         """
