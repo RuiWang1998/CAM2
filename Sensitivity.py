@@ -180,9 +180,12 @@ class SensitivityMeasurer:
         elif mode == "reduction_mean":
             inputs.requires_grad = True  # make sure that the input is tracked
             activation = self.get_nth_channel(inputs, layer_idx, channel_idx)  # a forward pass
-            activation = activation.mean()
-            activation.backward()  # backward pass that computes the gradient
-            return inputs.grad
+            if activation is not None:
+                activation = activation.mean()
+                activation.backward()  # backward pass that computes the gradient
+                return inputs.grad
+            else:
+                return None
 
         raise ValueError("the mode has only reduction_mean as of now")
 
