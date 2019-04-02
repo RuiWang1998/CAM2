@@ -1,3 +1,4 @@
+import cv2
 import torch
 
 from Sensitivity import SensitivityMeasurer
@@ -43,10 +44,20 @@ if __name__ == '__main__':
     image_size = 416
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
+    img1 = cv2.imread('pair_compare/00073_000000463_.jpg')
+    img1 = cv2.resize(img1, tuple([image_size, image_size]))
+    img1 = torch.tensor(img1 / 255, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0)
+    img2 = cv2.imread('pair_compare/00073_000000465_.jpg')
+    img2 = cv2.resize(img2, tuple([image_size, image_size]))
+    img2 = torch.tensor(img2 / 255, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0)
+
     YOLOv3 = Darknet(config_path, image_size)
     YOLOv3.load_weights(weight_path)
     yolo_module_list = list(YOLOv3.children())[0]
     place_holder = torch.randn(1, 3, 416, 416).to(device)
     measurer = YOLOMeasurer(YOLOv3, yolo_module_list)
     # measurer.get_nth_neuron(place_holder, 1, 0, 0).shape
-    Jacob = measurer.compute_channel_jacobian(place_holder, 1, 0)
+    # Jacob = measurer.compute_channel_jacobian(place_holder, 1, 0)
+    # jacobian = measurer.compute_channel_jacobian(img1, [0, 0], "reduction_mean")
+    mean_Jacobian1 = measurer.compute_jacobian(img1, mode="reduction_mean")
+    mean_Jacobian2 = measurer.compute_jacobian(img2, mode="reduction_mean")

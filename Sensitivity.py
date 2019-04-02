@@ -151,7 +151,7 @@ class SensitivityMeasurer:
         activation.backward()  # backward pass that computes the gradient
         return inputs.grad
 
-    def compute_channel_jacobian(self, inputs, layer_idx, channel_idx):
+    def compute_channel_jacobian(self, inputs, layer_idx, channel_idx, mode=None):
         """
         This function computes the Jacobian of one channel of designated layer
         :param inputs: the variables of the Jacobian
@@ -162,13 +162,25 @@ class SensitivityMeasurer:
         inputs.requires_grad = True
         height, width = self.size_count[layer_idx]
         outputs = self.get_nth_channel(inputs, layer_idx, channel_idx)
-        Jacobian = []
-        for width_i in range(width):
-            for height_i in range(height):
-                outputs[:, height_i, width_i].backward(retain_graph=True)
-                Jacobian.append(inputs.grad)
+        if mode is None:
+            Jacobian = []
+            for width_i in range(width):
+                for height_i in range(height):
+                    outputs[:, height_i, width_i].backward(retain_graph=True)
+                    Jacobian.append(inputs.grad)
 
-        return Jacobian
+            return Jacobian
+
+        elif mode == "reduction_mean":
+            inputs.requires_grad = True  # make sure that the input is tracked
+            activation = self.get_nth_channel(inputs, layer_idx, channel_idx)  # a forward pass
+            activation = activation.mean()
+            activation.backward()  # backward pass that computes the gradient
+            Jacobian = inputs.grad
+
+            return Jacobian
+
+        raise ValueError("the mode has only reduction_mean as of now")
 
     def compute_layer_jacobian(self, inputs, layer_idx):
         """
@@ -189,7 +201,7 @@ class SensitivityMeasurer:
 
         return Jacobian
 
-    def compute_jacobian(self, inputs, outputs):
+    def compute_jacobian(self, inputs, outputs=None, mode=None):
         """
         This function computes the jacobian of the output of interest w.r.t. the input of interest
         :param inputs: the input of interest
@@ -198,12 +210,20 @@ class SensitivityMeasurer:
         :return: the jacobian matrix (or vector)
         """
         # TODO: Think about how to efficiently compute the jacobian
-        if len(outputs) == 3:
-            # here implements the jacobian of a neuron
-            return self.compute_neuron_jacobian(inputs, *outputs)
-        if len(outputs) == 2:
-            # here implements the jacobian of a channel
-            return self.compute_channel_jacobian(inputs, *outputs)
-        if len(outputs) == 1:
-            # here implements the jacobian of a layer
-            return self.compute_layer_jacobian(inputs, *outputs)
+        if mode is None:
+            if len(outputs) == 3:
+                # here implements the jacobian of a neuron
+                return self.compute_neuron_jacobian(inputs, *outputs)
+            if len(outputs) == 2:
+                # here implements the jacobian of a channel
+                return self.compute_channel_jacobian(inputs, *outputs)
+            if len(outputs) == 1:
+                # here implements the jacobian of a layer
+                return self.compute_layer_jacobian(inputs, *outputs)
+
+        elif mode == "reduction_mean":
+            jacobian = []
+            for layer_idx in range(self.layer_num):
+                for channel_idx in range(self.channel_count[layer_idx]):
+                    jacobian.append(self.compute_channel_jacobian(inputs, layer_idx, channel_idx, mode=mode))
+            return jacobian
