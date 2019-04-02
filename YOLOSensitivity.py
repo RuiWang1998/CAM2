@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 import torch
 
 from Sensitivity import SensitivityMeasurer
@@ -60,4 +61,13 @@ if __name__ == '__main__':
     # Jacob = measurer.compute_channel_jacobian(place_holder, 1, 0)
     # jacobian = measurer.compute_channel_jacobian(img1, [0, 0], "reduction_mean")
     mean_Jacobian1 = measurer.compute_jacobian(img1, mode="reduction_mean")
+    for i, derivative in enumerate(mean_Jacobian1):
+        mean_Jacobian1[i] = derivative.norm().numpy()
+    mean_Jacobian1 = np.array(mean_Jacobian1)
     mean_Jacobian2 = measurer.compute_jacobian(img2, mode="reduction_mean")
+    for i, derivative in enumerate(mean_Jacobian2):
+        mean_Jacobian2[i] = derivative.norm().numpy()
+    mean_Jacobian2 = np.array(mean_Jacobian2)
+
+    np.savetxt("pair_compare/1.csv", mean_Jacobian1, delimiter=",")
+    np.savetxt("pair_compare/2.csv", mean_Jacobian2, delimiter=",")
