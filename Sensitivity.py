@@ -120,7 +120,10 @@ class SensitivityMeasurer:
         :param reduction: the reduction method, one of 'sum' or 'mean'
         :return: the n-th channel output
         """
-        return self.reduction(self.get_n_th_layer(img, layer_idx)[:, channel_idx, :, :], reduction)
+        try:
+            return self.reduction(self.get_n_th_layer(img, layer_idx)[:, channel_idx, :, :], reduction)
+        except IndexError:
+            return self.reduction(self.get_n_th_layer(img, layer_idx)[:, channel_idx, :], reduction)
 
     def get_nth_neuron(self, img, layer_idx, channel_idx, neuron_idx):
         """
