@@ -123,7 +123,10 @@ class SensitivityMeasurer:
         try:
             return self.reduction(self.get_n_th_layer(img, layer_idx)[:, channel_idx, :, :], reduction)
         except IndexError:
-            return self.reduction(self.get_n_th_layer(img, layer_idx)[:, channel_idx, :], reduction)
+            try:
+                return self.reduction(self.get_n_th_layer(img, layer_idx)[:, channel_idx, :], reduction)
+            except IndexError:
+                pass
 
     def get_nth_neuron(self, img, layer_idx, channel_idx, neuron_idx):
         """
