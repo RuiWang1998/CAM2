@@ -159,10 +159,10 @@ class SensitivityMeasurer:
         :param channel_idx: the index of the channel of interest
         :return: the Jacobian matrix of that channel
         """
-        inputs.requires_grad = True
-        height, width = self.size_count[layer_idx]
-        outputs = self.get_nth_channel(inputs, layer_idx, channel_idx)
         if mode is None:
+            inputs.requires_grad = True
+            height, width = self.size_count[layer_idx]
+            outputs = self.get_nth_channel(inputs, layer_idx, channel_idx)
             Jacobian = []
             for width_i in range(width):
                 for height_i in range(height):
@@ -176,9 +176,7 @@ class SensitivityMeasurer:
             activation = self.get_nth_channel(inputs, layer_idx, channel_idx)  # a forward pass
             activation = activation.mean()
             activation.backward()  # backward pass that computes the gradient
-            Jacobian = inputs.grad
-
-            return Jacobian
+            return inputs.grad
 
         raise ValueError("the mode has only reduction_mean as of now")
 
