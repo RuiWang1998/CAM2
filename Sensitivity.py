@@ -178,7 +178,8 @@ class SensitivityMeasurer:
             return Jacobian
 
         elif mode == "reduction_mean":
-            inputs.requires_grad = True  # make sure that the input is tracked
+            inputs.requires_grad = False  # make sure that the input is tracked
+            inputs.requires_grad = True
             activation = self.get_nth_channel(inputs, layer_idx, channel_idx)  # a forward pass
             if activation is not None:
                 activation = activation.mean()
@@ -232,5 +233,5 @@ class SensitivityMeasurer:
             jacobian = []
             for layer_idx in range(self.layer_num):
                 for channel_idx in range(self.channel_count[layer_idx]):
-                    jacobian.append(self.compute_channel_jacobian(inputs, layer_idx, channel_idx, mode=mode))
+                    jacobian.append(self.compute_channel_jacobian(inputs, layer_idx, channel_idx, mode=mode).clone())
             return jacobian

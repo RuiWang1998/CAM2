@@ -27,6 +27,7 @@ class YOLOMeasurer(SensitivityMeasurer):
         :param idx: the index of the layer
         :return: the output of the specific layer
         """
+        img = img.to(self.device)
         return self.model(img, layer_idx=[idx])[idx]
 
     def _module_list_channel_count(self):
@@ -46,6 +47,7 @@ class YOLOMeasurer(SensitivityMeasurer):
 
 
 if __name__ == '__main__':
+    # the paths
     config_path = 'YOLOv3/config/yolov3.cfg'
     weight_path = "YOLOv3/weights/yolov3.weights"
     image_folder = "YOLOv3/data/samples"
@@ -54,6 +56,7 @@ if __name__ == '__main__':
     image_size = 416
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
+    # load the images
     img1 = cv2.imread('pair_compare/00073_000000463_.jpg')
     img1 = cv2.resize(img1, tuple([image_size, image_size]))
     img1 = torch.tensor(img1 / 255, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0)
