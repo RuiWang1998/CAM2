@@ -233,5 +233,7 @@ class SensitivityMeasurer:
             jacobian = []
             for layer_idx in range(self.layer_num):
                 for channel_idx in range(self.channel_count[layer_idx]):
-                    jacobian.append(self.compute_channel_jacobian(inputs, layer_idx, channel_idx, mode=mode).clone())
+                    jacobian.append(self.compute_channel_jacobian(inputs,
+                                                                  layer_idx, channel_idx, mode=mode).clone().cpu())
+                    torch.cuda.empty_cache()
             return jacobian
