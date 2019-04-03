@@ -69,7 +69,7 @@ class SensitivityMeasurer:
             except NotImplementedError:
                 self.size_count[-1] = torch.Size([0, 0])
 
-    def get_n_th_layer_core(self, img, layer_idx):
+    def forward_pass(self, img, layer_idx):
         """
         This function gets the nth layer output
         :param img: the input image
@@ -109,7 +109,7 @@ class SensitivityMeasurer:
         :param reduction: the reduction method, one of 'sum' or 'mean'
         :return: the n-th layer's activation
         """
-        return self.reduction(self.get_n_th_layer_core(img, layer_idx), reduction)
+        return self.reduction(self.forward_pass(img, layer_idx), reduction)
 
     def get_nth_channel(self, img, layer_idx, channel_idx, reduction=None):
         """

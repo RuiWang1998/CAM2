@@ -20,6 +20,15 @@ class YOLOMeasurer(SensitivityMeasurer):
         """
         super(YOLOMeasurer, self).__init__(model, module_list, cuda=cuda)
 
+    def forward_pass(self, img, idx):
+        """
+        This function gets the n-th layer output of YOLOv3
+        :param img: the input image
+        :param idx: the index of the layer
+        :return: the output of the specific layer
+        """
+        return self.model(img, layer_idx=[idx])[idx]
+
     def _module_list_channel_count(self):
         """
         This overloads the module list method, which modifies the self.channel_count
