@@ -1,6 +1,6 @@
 import torch
 
-from YOLOv3.models import Darknet
+from modified_YOLO import YOLO
 from visualizer import Visualizer
 
 
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     batch_size = 1
     n_cpu = 8
 
-    YOLOv3 = Darknet(config_path, image_size)
+    YOLOv3 = YOLO(config_path, image_size)
     YOLOv3.load_weights(weight_path)
     yolo_module_list = list(YOLOv3.children())[0]
 

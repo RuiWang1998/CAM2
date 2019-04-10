@@ -8,7 +8,7 @@ import cv2
 import torch
 
 from Sensitivity import SensitivityMeasurer
-from YOLOv3.models import Darknet
+from modified_YOLO import YOLO
 
 
 class YOLOMeasurer(SensitivityMeasurer):
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     img2 = cv2.resize(img2, tuple([image_size, image_size]))
     img2 = torch.tensor(img2 / 255, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0)
 
-    YOLOv3 = Darknet(config_path, image_size)
+    YOLOv3 = YOLO(config_path, image_size)
     YOLOv3.load_weights(weight_path)
     yolo_module_list = list(YOLOv3.children())[0]
     place_holder = torch.randn(1, 3, 416, 416).to(device)
