@@ -1,3 +1,9 @@
+########################################################
+# Purpose of This Script:                              #
+#   - Define the class of the measurer                 #
+#                                                      #
+########################################################
+
 import gc
 
 import torch
@@ -39,6 +45,7 @@ class SensitivityMeasurer:
         self.batch_size = batch_size  # the batch size of the input to the model
         self.channel_num = channel_num
 
+        # This here ta
         if isinstance(model_intake_size, int):
             self.width = model_intake_size
             self.height = model_intake_size

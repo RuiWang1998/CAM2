@@ -1,5 +1,10 @@
+########################################################
+# Purpose of This Script:                              #
+#   - An instance of the sensitivity measurer          #
+#                                                      #
+########################################################
+
 import cv2
-import numpy as np
 import torch
 
 from Sensitivity import SensitivityMeasurer
@@ -72,6 +77,10 @@ if __name__ == '__main__':
     # measurer.get_nth_neuron(place_holder, 1, 0, 0).shape
     # Jacob = measurer.compute_channel_jacobian(place_holder, 1, 0)
     # jacobian = measurer.compute_channel_jacobian(img1, [0, 0], "reduction_mean")
+
+    """
+    uncomment this part if you want to compute the norm
+    
     mean_Jacobian1 = measurer.compute_jacobian(img1, mode="reduction_mean")
     for i, derivative in enumerate(mean_Jacobian1):
         if derivative is not None:
@@ -85,3 +94,4 @@ if __name__ == '__main__':
 
     np.savetxt("pair_compare/1.csv", mean_Jacobian1, delimiter=",")
     np.savetxt("pair_compare/2.csv", mean_Jacobian2, delimiter=",")
+    """
