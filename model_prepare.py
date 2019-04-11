@@ -70,7 +70,7 @@ class PreModel:
             except NotImplementedError:
                 self.size_count[-1] = torch.Size([0, 0])
 
-    def forward_pass(self, img, layer_idx, output_index=None, input_index=None):
+    def forward_pass(self, img, layer_idx=None, output_index=None, input_index=None):
         """
         This function gets the nth layer output
         :param img: the input image
@@ -87,8 +87,7 @@ class PreModel:
                 pass
             if i == layer_idx:
                 return img
-        raise ValueError(f"Layer {layer_idx} is larger than the maximum layer count {self.layer_num}")
-
+        return img
     @staticmethod
     def reduction(reduction_tensor, reduction_type):
         """

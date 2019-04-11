@@ -116,3 +116,15 @@ class SensitivityMeasurer(PreModel):
                                                                   layer_idx, channel_idx, mode=mode).clone().cpu())
                     torch.cuda.empty_cache()
             return jacobian
+
+    def gradient_incr(self, inputs):
+        """
+        This function computes the gradient from adjacent layers
+        :param inputs: the input
+        :return: the gradients
+        """
+        inputs = inputs.to(self.device)
+        gradients = []
+        for i in range(self.layer_num):
+            gradients.append(self.forward_pass(inputs, input_index=i, output_index=i + 1))
+        return gradients

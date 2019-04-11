@@ -5,6 +5,7 @@
 ########################################################
 
 import cv2
+import numpy as np
 import torch
 
 from Sensitivity import SensitivityMeasurer
@@ -25,22 +26,22 @@ class YOLOMeasurer(SensitivityMeasurer):
         """
         super(YOLOMeasurer, self).__init__(model, module_list, cuda=cuda)
 
-    def forward_pass(self, img, idx, output_index=None, input_index=None):
+    def forward_pass(self, img, layer_idx=None, output_index=None, input_index=None):
         """
         This function gets the n-th layer output of YOLOv3
         :param img: the input image
-        :param idx: the index of the layer
+        :param layer_idx: the index of the layer
         :param output_index: the index of the output to take gradient from
         :param input_index: the index of the input layer whose gradient is calculated
         :return: the output of the specific layer
         """
         get_grad = output_index is not None and input_index is not None
-        if get_grad:
+        if not get_grad:
             img = img.to(self.device)
-            return self.model(img, layer_idx=[idx])[idx]
+            return self.model(img, layer_idx=[layer_idx])[layer_idx]
         else:
             img = img.to(self.device)
-            return self.model(img, output_index=output_index, input_index=input_index)[idx]
+            return self.model(img, output_index=output_index, input_index=input_index)
 
     def _module_list_channel_count(self):
         """
@@ -56,18 +57,6 @@ class YOLOMeasurer(SensitivityMeasurer):
         del place_holder
         if self.cuda:
             torch.cuda.empty_cache()
-
-    def gradient_incr(self, inputs):
-        """
-        This function computes the gradient from adjacent layers
-        :param inputs: the input
-        :return: the gradients
-        """
-        inputs = inputs.to(self.device)
-        gradients = []
-        for i in range(self.layer_num):
-            gradients.append(self.forward_pass(inputs, input_index=i, output_index=i + 1))
-        return gradients
 
 
 if __name__ == '__main__':
@@ -96,7 +85,26 @@ if __name__ == '__main__':
     # measurer.get_nth_neuron(place_holder, 1, 0, 0).shape
     # Jacob = measurer.compute_channel_jacobian(place_holder, 1, 0)
     # jacobian = measurer.compute_channel_jacobian(img1, [0, 0], "reduction_mean")
-    measurer.model(img1.to(device), input_index=1, output_index=2)
+    gradients1 = measurer.gradient_incr(img1)
+    mean_gradients1 = []
+    stacked_grad = []
+    for i, gradient in enumerate(gradients1):
+        if gradient is not None:
+            grad_list = [gradient[0, i, ...] for i in range(gradient.shape[1])]
+            stacked_grad += grad_list
+    mean_gradients1 = [gradient.norm().detach().cpu().numpy() for gradient in stacked_grad]
+
+    gradients2 = measurer.gradient_incr(img2)
+    mean_gradients2 = []
+    stacked_grad = []
+    for i, gradient in enumerate(gradients2):
+        if gradient is not None:
+            grad_list = [gradient[0, i, ...] for i in range(gradient.shape[1])]
+            stacked_grad += grad_list
+    mean_gradients2 = [gradient.norm().detach().cpu().numpy() for gradient in stacked_grad]
+
+    np.savetxt("pair_compare/incr_1.csv", np.array(mean_gradients1), delimiter=",")
+    np.savetxt("pair_compare/incr_2.csv", np.array(mean_gradients2), delimiter=",")
     """
     uncomment this part if you want to compute the norm
     
