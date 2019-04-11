@@ -1,3 +1,5 @@
+import gc
+
 import torch
 
 
@@ -73,6 +75,8 @@ class PreModel:
         This function gets the nth layer output
         :param img: the input image
         :param layer_idx: the layer index of interest
+        :param output_index: the index of the output layer
+        :param input_index: the index of the input layer
         :return: the output at that layer
         """
         img = img.to(self.device)
