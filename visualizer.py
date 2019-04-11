@@ -8,8 +8,10 @@ import torch.nn as nn
 import torch.optim as optimizers
 from scipy.misc import imsave as save_img
 
+from model_prepare import PreModel
 
-class Visualizer:
+
+class Visualizer(PreModel):
     """
     This should serve as a framework for any sort of models and later some other models
     """
@@ -25,22 +27,7 @@ class Visualizer:
         :param channel_num: the number of channels
         :param cuda: the device to put the model and data on
         """
-        self.cuda = cuda and torch.cuda.is_available()
-        self.device = torch.device('cuda:0' if self.cuda else 'cpu')
-
-        if model is not None:
-            self.model = model.to(self.device)
-        if module_list is not None:
-            self.module_list = module_list
-        else:
-            self.module_list = list(model.children())
-
-        self.layer_num = len(self.module_list)  # the number of layers in a model
-        self.channel_count = []
-        self.input_size = model_intake_size
-        self.batch_size = batch_size
-        self.channel_num = channel_num  # number of channels in the input image
-        self._module_list_channel_count()
+        super(Visualizer, self).__init__(model, module_list, cuda, model_intake_size, batch_size, channel_num)
 
         self.z_image = self.image_init(initial_size)  # initialize the first image
         self.z_image.requires_grad = True
@@ -51,22 +38,6 @@ class Visualizer:
             self.input_generator = nn.UpsamplingBilinear2d(size=(model_intake_size, model_intake_size))
         else:
             self.input_generator = nn.UpsamplingBilinear2d(size=model_intake_size)
-
-    def _module_list_channel_count(self):
-        """
-        This function counts the number of channels in each layer
-        Note that for any model with residue network, we have to overload this method
-        """
-        place_holder = self.random_init(self.input_size)
-        for i, layer in enumerate(self.module_list):
-            self.forward_pass(place_holder, i)
-            self.module_list[i] = layer.to(self.device)
-            try:
-                place_holder = self.module_list[i](place_holder)
-                output_shape = place_holder.shape
-                self.channel_count.append(output_shape[1])
-            except NotImplementedError:
-                self.channel_count.append(0)
 
     @staticmethod
     def cast(value, d_type=torch.float32):
@@ -222,23 +193,6 @@ class Visualizer:
             self.z_image = z_image.requires_grad_()
         except AttributeError:
             pass
-
-    def forward_pass(self, img, layer_idx):
-        """
-        This function gets the n-th layer output
-        Note that for any model with residue network, we have to overload this method
-        :param img: the input image
-        :param layer_idx: the layer index
-        :return: the output
-        """
-        for i, layer in enumerate(self.module_list):
-            try:
-                img = layer(img)
-            except NotImplementedError:
-                pass
-            if i == layer_idx:
-                return img
-        return img
 
     def refresh(self, size):
         if not self.new:
