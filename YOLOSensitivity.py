@@ -76,24 +76,25 @@ if __name__ == '__main__':
     place_holder = torch.randn(1, 3, 416, 416).to(device)
     measurer = YOLOMeasurer(YOLOv3, yolo_module_list)
 
-    import glob
+    import sys
     import re
     import os
+    import gc
 
-    images = glob.glob(data_path1 + "/img1/*jpg") + glob.glob(data_path2 + "/img1/*jpg")
-    for image_path in images:
-        image = load_image(image_path, image_size)
-        mean_Jacobian = measurer.compute_jacobian(image, mode="reduction_mean")
-        for i, derivative in enumerate(mean_Jacobian):
-            if derivative is not None:
-                mean_Jacobian[i] = derivative.norm().detach().cpu().numpy()
-        mean_Jacobian = np.array(mean_Jacobian)
-        save_path = "./"
-        file_save_path = save_path + re.search(r"[^/.]+/[^/.]+/([^/.]+)\.jpg$", image_path)[0] + '.csv'
-        directory = re.search(r"(.+img1)", file_save_path)[1]
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-        np.savetxt(file_save_path, mean_Jacobian, delimiter=",")
+    image_path = sys.argv[1]
+    image = load_image(image_path, image_size)
+    mean_Jacobian = measurer.compute_jacobian(image, mode="reduction_mean")
+    for i, derivative in enumerate(mean_Jacobian):
+        if derivative is not None:
+            mean_Jacobian[i] = derivative.norm().detach().cpu().numpy()
+    mean_Jacobian = np.array(mean_Jacobian)
+    save_path = "./"
+    file_save_path = save_path + re.search(r"[^/.]+/[^/.]+/([^/.]+)\.jpg$", image_path)[0] + '.csv'
+    directory = re.search(r"(.+img1)", file_save_path)[1]
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    np.savetxt(file_save_path, mean_Jacobian, delimiter=",")
+    gc.collect()
 
     #
     # # load the images
