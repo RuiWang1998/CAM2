@@ -88,6 +88,7 @@ class PreModel:
             if i == layer_idx:
                 return img
         return img
+
     @staticmethod
     def reduction(reduction_tensor, reduction_type):
         """

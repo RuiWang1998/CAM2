@@ -128,3 +128,13 @@ class SensitivityMeasurer(PreModel):
         for i in range(self.layer_num):
             gradients.append(self.forward_pass(inputs, input_index=i, output_index=i + 1))
         return gradients
+
+    def compute_paper(self, img):
+        if self.cuda:
+            img = img.to(self.device)
+
+        alpha = 1
+        output = self.model(input_index=alpha, output_index=self.layer_num + 10)
+        output_index = 10  # TODO get the index
+        output[output_index].backward()
+        score_function = self.module_list[alpha][0].weight.grad  # take the derivative w.r.t. weights
