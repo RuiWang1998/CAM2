@@ -24,7 +24,9 @@ class YOLOv3Visualizer(Visualizer):
         :param idx: the index of the layer
         :return: the output of the specific layer
         """
-        return self.model(img, layer_idx=[idx])[idx]
+        if not isinstance(idx, list):
+            idx = [idx]
+        return self.model(img, layer_idx=idx)[idx[0]]
 
     def _module_list_channel_count(self):
         """
@@ -46,12 +48,12 @@ if __name__ == "__main__":
     # lr = float(sys.argv[4]) if len(sys.argv) >= 5 else 1e-4
     # weight_decay = lr / 100
 
-    layer_idx = 101
-    channel_idx = 3
-    epochs = 300
+    layer_idx = 45
+    channel_idx = 0
+    epochs = 50
 
-    lr = 1e-2
-    weight_decay = 1e-5
+    lr = 1e-1
+    weight_decay = 1e-6
 
     scale_step = 30
     init_size = 416
@@ -70,11 +72,11 @@ if __name__ == "__main__":
     yolo_module_list = list(YOLOv3.children())[0]
 
     visualizer = YOLOv3Visualizer(YOLOv3, module_list=yolo_module_list, cuda=True)
-    visualizer.multistep_visualize(layer_idx, channel_idx, data_path="multi_vis", learning_rate=lr,
-                                   weight_decay=weight_decay, epochs=epochs, scale_step=scale_step,
-                                   initial_size=init_size, forward_pass=visualizer.one_pass_neuron)
+    # visualizer.multistep_visualize(layer_idx, channel_idx, data_path="multi_vis", learning_rate=lr,
+    #                                weight_decay=weight_decay, epochs=epochs, scale_step=scale_step,
+    #                                initial_size=init_size, forward_pass=visualizer.one_pass_neuron)
     visualizer.vanilla_visualize(layer_idx, channel_idx, data_path="vanilla_vis", learning_rate=lr,
                                  weight_decay=weight_decay, epochs=epochs,
-                                 single_pass=visualizer.one_pass_neuron)
+                                 single_pass=visualizer.one_pass_channel)
     ####
     # visualizer.visualize_whole_layer(10, data_path='visualization', weight_decay=1e-5)

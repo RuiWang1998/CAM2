@@ -7,7 +7,6 @@ import torch
 import torch.distributions as distribution
 import torch.nn as nn
 import torch.optim as optimizers
-import torchvision.models as models
 from scipy.misc import imsave as save_img
 
 from model_prepare import PreModel
@@ -268,9 +267,8 @@ class Visualizer(PreModel):
         :param optimizer: the optimizer
         """
         img = self.generate_input_image()
-        if not isinstance(layer_idx, list):
-            layer_idx = [layer_idx]
-        output = self.forward_pass(img, layer_idx)[layer_idx[0]][0, channel_idx, :, :]
+
+        output = self.forward_pass(img, layer_idx)[0, channel_idx, :, :]
         output_channels = output.mean()
         loss = - output_channels
         self.backward_pass(loss, optimizer)
@@ -393,10 +391,3 @@ class Visualizer(PreModel):
             self.visualize_whole_layer(layer_idx=layer_idx, epochs=epochs, optimizer=optimizer,
                                        data_path=data_path, learning_rate=learning_rate, weight_decay=weight_decay)
 
-
-if __name__ == "__main__":
-    vgg16 = models.vgg16(pretrained=True)
-    vgg_visualizer = Visualizer(vgg16, list(vgg16.children()),
-                                model_intake_size=224)
-
-    vgg_visualizer.vanilla_visualize(30, 180, data_path="vgg", epochs=50)
