@@ -83,7 +83,7 @@ if __name__ == '__main__':
 
     image_path = sys.argv[1]
     image = load_image(image_path, image_size)
-    mean_Jacobian = measurer.compute_jacobian(image, mode="reduction_mean")
+    mean_Jacobian = measurer.compute_jacobian(image, mode="reduction_mean_channel")
     for i, derivative in enumerate(mean_Jacobian):
         if derivative is not None:
             mean_Jacobian[i] = derivative.norm().detach().cpu().numpy()

@@ -108,7 +108,7 @@ class SensitivityMeasurer(PreModel):
                 # here implements the jacobian of a layer
                 return self.compute_layer_jacobian(inputs, *outputs)
 
-        elif mode == "reduction_mean":
+        elif mode == "reduction_mean_channel":
             jacobian = []
             for layer_idx in range(self.layer_num):
                 for channel_idx in range(self.channel_count[layer_idx]):
@@ -116,6 +116,12 @@ class SensitivityMeasurer(PreModel):
                                                                   layer_idx, channel_idx, mode=mode).clone().cpu())
                     torch.cuda.empty_cache()
             return jacobian
+
+        elif mode == "reduction_mean_layer":
+            jacobian = []
+            for layer_idx in range(self.layer_num):
+                jacobian.append(self.compute_layer_jacobian(inputs,
+                                                            layer_idx))
 
     def gradient_incr(self, inputs):
         """
