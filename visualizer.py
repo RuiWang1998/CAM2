@@ -2,6 +2,7 @@ import gc
 import os
 import shutil
 
+import numpy as np
 import torch
 import torch.distributions as distribution
 import torch.nn as nn
@@ -36,6 +37,7 @@ class Visualizer(PreModel):
         # get the scale
         if isinstance(model_intake_size, int):
             self.input_generator = nn.UpsamplingBilinear2d(size=(model_intake_size, model_intake_size))
+            self.input_size = model_intake_size
         else:
             self.input_generator = nn.UpsamplingBilinear2d(size=model_intake_size)
 
@@ -59,24 +61,63 @@ class Visualizer(PreModel):
         """
         return torch.nn.Tanh()(scaling * x) / 2 + 0.5
 
-    def random_init(self, image_size, mean=0, std=1, normal=True):
+    def preprocess_image(self, pil_im, resize_im=True):
+        """
+        From https://github.com/utkuozbulak/pytorch-cnn-visualizations/
+            Processes image for CNNs
+
+        Args:
+            PIL_img (PIL_img): Image to process
+            resize_im (bool): Resize to 224 or not
+        returns:
+            im_as_var (torch variable): Variable that contains processed float tensor
+        """
+        # mean and std list for channels (Imagenet)
+        mean = [0.485, 0.456, 0.406]
+        std = [0.229, 0.224, 0.225]
+        # Resize image
+        if resize_im:
+            pil_im.thumbnail((512, 512))
+        im_as_arr = np.float32(pil_im)
+        im_as_arr = im_as_arr.transpose(2, 0, 1)  # Convert array to D,W,H
+        # Normalize the channels
+        for channel, _ in enumerate(im_as_arr):
+            im_as_arr[channel] /= 255
+            im_as_arr[channel] -= mean[channel]
+            im_as_arr[channel] /= std[channel]
+        # Convert to float tensor
+        im_as_ten = torch.from_numpy(im_as_arr).float()
+        # Add one more channel to the beginning. Tensor shape = 1,3,224,224
+        im_as_ten.unsqueeze_(0)
+        # Convert to Pytorch variable
+        im_as_ten.requires_grad = True
+        im_as_var = im_as_ten
+        return im_as_var
+
+    def random_init(self, image_size, mean=0, std=1, normal=True, canonical=True):
         """
         This function initializes a new original image
         :param image_size: the image size of the model
         :param mean: the mean of the distribution
         :param std: the standard deviation of the distribution
         :param normal: if normal distribution
+        :param canonical: following the priors
         :return: the image initialized
         """
-        if normal:
-            sampler = distribution.Normal(self.cast(mean), self.cast(std))
-        else:
-            sampler = distribution.Uniform(-1.5, 1.5)
-
         if not isinstance(image_size, list):
             size = torch.Size([self.batch_size, self.channel_num, image_size, image_size])
         else:
             size = torch.Size([self.batch_size, self.channel_num, image_size[0], image_size[1]])
+
+        if canonical:
+            random_image = np.uint8(np.random.uniform(150, 180, (size[2], size[3], self.channel_num)))
+            processed_image = self.preprocess_image(random_image, False)
+            return processed_image
+        else:
+            if normal:
+                sampler = distribution.Normal(self.cast(mean), self.cast(std))
+            else:
+                sampler = distribution.Uniform(-1.5, 1.5)
 
         return sampler.sample(size)
 
@@ -226,9 +267,10 @@ class Visualizer(PreModel):
         :param optimizer: the optimizer
         """
         img = self.generate_input_image()
-        output = self.forward_pass(img, layer_idx)
-        output_channels = output.mean(-1).mean(-1).mean(0)
-        loss = - output_channels[channel_idx]
+
+        output = self.forward_pass(img, layer_idx)[0, channel_idx, :, :]
+        output_channels = output.mean()
+        loss = - output_channels
         self.backward_pass(loss, optimizer)
 
     @staticmethod
@@ -348,3 +390,4 @@ class Visualizer(PreModel):
         for layer_idx in range(self.layer_num):
             self.visualize_whole_layer(layer_idx=layer_idx, epochs=epochs, optimizer=optimizer,
                                        data_path=data_path, learning_rate=learning_rate, weight_decay=weight_decay)
+

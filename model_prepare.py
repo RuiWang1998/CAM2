@@ -43,10 +43,14 @@ class PreModel:
         if isinstance(model_intake_size, int):
             self.width = model_intake_size
             self.height = model_intake_size
+            self.input_size = model_intake_size
         else:
             self.width, self.height = model_intake_size
 
-        self._module_list_channel_count()
+        try:
+            self._module_list_channel_count()
+        except RuntimeError:
+            self.size_count = None
 
         gc.collect()
         torch.cuda.empty_cache()
