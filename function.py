@@ -5,6 +5,16 @@ from cgan_constants import LATENT_DIM, device
 
 
 def generator_train_step(generator, images_nig, discriminator, batch_size, loss_func, optimizer):
+    """
+    trains the generator
+    :param generator: the generator network to train
+    :param images_nig: the night image
+    :param discriminator: the discriminator
+    :param batch_size: the size of the mini batch
+    :param loss_func: the loss function to train with, typically BCE
+    :param optimizer: the optimizer
+    :return: the loss value
+    """
     optimizer.zero_grad()
 
     z = torch.randn(batch_size, LATENT_DIM).to(device)
@@ -19,6 +29,17 @@ def generator_train_step(generator, images_nig, discriminator, batch_size, loss_
 
 
 def discriminator_train_step(generator, images_day, images_nig, discriminator, batch_size, loss_func, optimizer):
+    """
+    trains the generator
+    :param generator: the generator network to train
+    :param images_day: the day time image
+    :param images_nig: the night time image
+    :param discriminator: the discriminator
+    :param batch_size: the size of the mini batch
+    :param loss_func: the loss function to train with, typically BCE
+    :param optimizer: the optimizer
+    :return: the loss value
+    """
     optimizer.zero_grad()
     # real images pairs
     score = discriminator(images_nig, images_day)
