@@ -17,11 +17,12 @@ def generator_train_step(generator, images_nig, discriminator, batch_size, loss_
     """
     optimizer.zero_grad()
 
-    z = torch.randn(batch_size, LATENT_DIM).to(device)
-    fake_day_images = generator(z, images_nig)
-    score = discriminator(images_nig, fake_day_images)
-    loss = loss_func(score, torch.ones(batch_size).to(device))
+    z = torch.randn(batch_size, LATENT_DIM).to(device)  # latent random vector
+    fake_day_images = generator(z, images_nig)  # generated fake image
+    score = discriminator(images_nig, fake_day_images)  # ask the discriminator to tell
+    loss = loss_func(score, torch.ones(batch_size).to(device))  # compute the loss
 
+    # back propagation
     loss.backward()
     optimizer.step()
 
@@ -42,14 +43,14 @@ def discriminator_train_step(generator, images_day, images_nig, discriminator, b
     """
     optimizer.zero_grad()
     # real images pairs
-    score = discriminator(images_nig, images_day)
-    loss_real = loss_func(score, torch.ones(batch_size).to(device))
+    score = discriminator(images_nig, images_day)  # tell the discriminator the real picture
+    loss_real = loss_func(score, torch.ones(batch_size).to(device))  # compute the loss from the real image
 
     # fake image pairs
-    z = torch.randn(batch_size, LATENT_DIM).to(device)
-    fake_day_images = generator(z, images_nig)
-    score = discriminator(images_nig, fake_day_images)
-    loss_fake = loss_func(score, torch.zeros(batch_size).to(device))
+    z = torch.randn(batch_size, LATENT_DIM).to(device)  # the latent random vector
+    fake_day_images = generator(z, images_nig)  # the fake day image
+    score = discriminator(images_nig, fake_day_images)  # the score of the fake from the discriminator
+    loss_fake = loss_func(score, torch.zeros(batch_size).to(device))  # the loss from the fake image
 
     # backward pass
     loss = loss_real + loss_fake
