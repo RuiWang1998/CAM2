@@ -9,7 +9,6 @@ import torch
 
 from Sensitivity import SensitivityMeasurer
 from modified_YOLO import YOLO
-from utility import load_image
 
 
 class YOLOMeasurer(SensitivityMeasurer):
@@ -76,34 +75,31 @@ if __name__ == '__main__':
     place_holder = torch.randn(1, 3, 416, 416).to(device)
     measurer = YOLOMeasurer(YOLOv3, yolo_module_list)
 
-    import sys
-    import re
-    import os
-    import gc
-
-    image_path = sys.argv[1]
-    image = load_image(image_path, image_size)
-    mean_Jacobian = measurer.compute_jacobian(image, mode="reduction_mean_channel")
-    for i, derivative in enumerate(mean_Jacobian):
-        if derivative is not None:
-            mean_Jacobian[i] = derivative.norm().detach().cpu().numpy()
-    mean_Jacobian = np.array(mean_Jacobian)
-    save_path = "./"
-    file_save_path = save_path + re.search(r"[^/.]+/[^/.]+/([^/.]+)\.jpg$", image_path)[0] + '.csv'
-    directory = re.search(r"(.+img1)", file_save_path)[1]
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-    np.savetxt(file_save_path, mean_Jacobian, delimiter=",")
-    gc.collect()
+    # image_path = sys.argv[1]
+    # image = load_image(image_path, image_size)
+    # mean_Jacobian = measurer.compute_jacobian(image, mode="reduction_mean_channel")
+    # for i, derivative in enumerate(mean_Jacobian):
+    #     if derivative is not None:
+    #         mean_Jacobian[i] = derivative.norm().detach().cpu().numpy()
+    # mean_Jacobian = np.array(mean_Jacobian)
+    # save_path = "./"
+    # file_save_path = save_path + re.search(r"[^/.]+/[^/.]+/([^/.]+)\.jpg$", image_path)[0] + '.csv'
+    # directory = re.search(r"(.+img1)", file_save_path)[1]
+    # if not os.path.exists(directory):
+    #     os.makedirs(directory)
+    # np.savetxt(file_save_path, mean_Jacobian, delimiter=",")
+    # gc.collect()
 
     #
     # # load the images
-    # img1 = cv2.imread('pair_compare/00073_000000463_.jpg')
-    # img1 = cv2.resize(img1, tuple([image_size, image_size]))
-    # img1 = torch.tensor(img1 / 255, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0)
-    # img2 = cv2.imread('pair_compare/00073_000000465_.jpg')
-    # img2 = cv2.resize(img2, tuple([image_size, image_size]))
-    # img2 = torch.tensor(img2 / 255, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0)
+    import cv2
+
+    img1 = cv2.imread('pair_compare/00073_000000463_.jpg')
+    img1 = cv2.resize(img1, tuple([image_size, image_size]))
+    img1 = torch.tensor(img1 / 255, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0)
+    img2 = cv2.imread('pair_compare/00073_000000465_.jpg')
+    img2 = cv2.resize(img2, tuple([image_size, image_size]))
+    img2 = torch.tensor(img2 / 255, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0)
 
     # measurer.get_nth_neuron(place_holder, 1, 0, 0).shape
     # Jacob = measurer.compute_channel_jacobian(place_holder, 1, 0)
@@ -137,16 +133,16 @@ if __name__ == '__main__':
 
     # uncomment this part if you want to compute the norm
 
-    # mean_Jacobian1 = measurer.compute_jacobian(img1, mode="reduction_mean")
-    # for i, derivative in enumerate(mean_Jacobian1):
-    #     if derivative is not None:
-    #         mean_Jacobian1[i] = derivative.norm().detach().cpu().numpy()
-    # mean_Jacobian1 = np.array(mean_Jacobian1)
-    # mean_Jacobian2 = measurer.compute_jacobian(img2, mode="reduction_mean")
-    # for i, derivative in enumerate(mean_Jacobian2):
-    #     if derivative is not None:
-    #         mean_Jacobian2[i] = derivative.norm().detach().cpu().numpy()
-    # mean_Jacobian2 = np.array(mean_Jacobian2)
-    #
-    # np.savetxt("pair_compare/1.csv", mean_Jacobian1, delimiter=",")
-    # np.savetxt("pair_compare/2.csv", mean_Jacobian2, delimiter=",")
+    mean_Jacobian1 = measurer.compute_jacobian(img1, mode="reduction_mean_layer")
+    for i, derivative in enumerate(mean_Jacobian1):
+        if derivative is not None:
+            mean_Jacobian1[i] = derivative.norm().detach().cpu().numpy()
+    mean_Jacobian1 = np.array(mean_Jacobian1)
+    mean_Jacobian2 = measurer.compute_jacobian(img2, mode="reduction_mean_layer")
+    for i, derivative in enumerate(mean_Jacobian2):
+        if derivative is not None:
+            mean_Jacobian2[i] = derivative.norm().detach().cpu().numpy()
+    mean_Jacobian2 = np.array(mean_Jacobian2)
+
+    np.savetxt("pair_compare/1_layer.csv", mean_Jacobian1, delimiter=",")
+    np.savetxt("pair_compare/2_layer.csv", mean_Jacobian2, delimiter=",")

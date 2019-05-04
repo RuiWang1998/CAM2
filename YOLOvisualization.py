@@ -49,7 +49,7 @@ if __name__ == "__main__":
     # weight_decay = lr / 100
 
     layer_idx = 45
-    channel_idx = 0
+    channel_idx = 6
     epochs = 50
 
     lr = 1e-1
