@@ -123,6 +123,8 @@ class SensitivityMeasurer(PreModel):
                 jacobian.append(self.compute_layer_jacobian(inputs,
                                                             layer_idx))
 
+            return jacobian
+
     def gradient_incr(self, inputs):
         """
         This function computes the gradient from adjacent layers
