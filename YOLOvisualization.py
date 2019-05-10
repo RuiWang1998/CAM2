@@ -49,7 +49,7 @@ if __name__ == "__main__":
     # weight_decay = lr / 100
 
     layer_idx = 45
-    channel_idx = 6
+    channel_idx = 4
     epochs = 50
 
     lr = 1e-1
@@ -75,7 +75,8 @@ if __name__ == "__main__":
     # visualizer.multistep_visualize(layer_idx, channel_idx, data_path="multi_vis", learning_rate=lr,
     #                                weight_decay=weight_decay, epochs=epochs, scale_step=scale_step,
     #                                initial_size=init_size, forward_pass=visualizer.one_pass_neuron)
-    visualizer.vanilla_visualize(layer_idx, channel_idx, data_path="vanilla_vis", learning_rate=lr,
+    for channel_idx in range(4,32):
+        visualizer.vanilla_visualize(layer_idx, channel_idx, data_path="vanilla_vis", learning_rate=lr,
                                  weight_decay=weight_decay, epochs=epochs,
                                  single_pass=visualizer.one_pass_channel)
     ####

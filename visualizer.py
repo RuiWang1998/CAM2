@@ -1,7 +1,7 @@
-import gc
 import os
 import shutil
 
+import gc
 import numpy as np
 import torch
 import torch.distributions as distribution
@@ -240,7 +240,7 @@ class Visualizer(PreModel):
             del self.z_image
             gc.collect()
             self.z_image = self.image_init(size)
-            self.new = 1
+            self.new = True
 
     def one_pass_neuron(self, layer_idx, channel_idx, optimizer, neuron_x=0, neuron_y=0):
         """
@@ -318,6 +318,7 @@ class Visualizer(PreModel):
 
         self.save_image(data_path, epoch, layer_idx, channel_idx, epochs, step_idx=0)
         img_idx += 1
+        self.new = False
 
     def multistep_visualize(self, layer_idx, channel_idx, epochs=3, optimizer=optimizers.Adam,
                             data_path="multi_vis", learning_rate=0.001, weight_decay=0, scale_step=12,

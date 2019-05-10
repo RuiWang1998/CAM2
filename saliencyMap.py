@@ -27,11 +27,9 @@ n_cpu = 8
 # # the Model
 
 # %%
-import sys
 
-sys.path.insert(0, 'C:/Users/ruiwa/Documents/GitHub/repos/ClonedModel/PyTorch-YOLOv3')
 
-from models import Darknet
+from YOLOv3.models import Darknet
 
 model = Darknet(config_path, image_size)
 model.load_weights(weight_path)
@@ -110,4 +108,4 @@ for batch_i, (img_paths, input_imgs) in enumerate(dataloader):
     imgs.append(input_imgs)
 
 # %%
-img2Saliency(imgs[0])
+img2Saliency(imgs[5])

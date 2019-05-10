@@ -1,5 +1,4 @@
 import gc
-
 import torch
 
 from YOLOSensitivity import YOLOMeasurer
@@ -19,7 +18,7 @@ measurer = YOLOMeasurer(YOLOv3, yolo_module_list, cuda=False)
 
 layer_idx = [i for i in range(measurer.layer_num)]
 all_outputs = measurer.model(place_holder, layer_idx=layer_idx)
-grads = measurer.model(place_holder, input_index=104, output_index=105)
+# grads = measurer.model(place_holder, input_index=104, output_index=105)
 # So we need to take the derivative from layer 104's output to layer 103 output
 # layer_103_output = all_outputs[103]
 # layer_104_output = all_outputs[104]
@@ -29,10 +28,13 @@ grads = measurer.model(place_holder, input_index=104, output_index=105)
 grads = measurer.model(place_holder, input_index=0, output_index=1)
 activation_grad = (all_outputs[0] > 0).type(torch.float64) * 0.9 + 0.1
 filter_weights = measurer.module_list[0][0].weight
+clipped_weight = filter_weights * 0.1
 
 grads_manual = torch.zeros_like(place_holder)
 layer_output = all_outputs[0]
 leaky_output_gradient = (layer_output > 0).type(torch.float) * 0.9 + 0.1
+
+
 
 
 def in_limit(value, limit):
