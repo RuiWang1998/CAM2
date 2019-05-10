@@ -13,7 +13,7 @@ YOLOv3 = YOLO(config_path, image_size)
 YOLOv3.load_weights(weight_path)
 yolo_module_list = list(YOLOv3.children())[0]
 device = "cpu"  # torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-place_holder = torch.randn(1, 3, image_size, image_size).to(device)
+place_holder = torch.randn(1, 3, image_size, image_size, 9).to(device)
 measurer = YOLOMeasurer(YOLOv3, yolo_module_list, cuda=False)
 
 layer_idx = [i for i in range(measurer.layer_num)]
@@ -34,7 +34,12 @@ grads_manual = torch.zeros_like(place_holder)
 layer_output = all_outputs[0]
 leaky_output_gradient = (layer_output > 0).type(torch.float) * 0.9 + 0.1
 
-
+view_weights = filter_weights.view(32, -1)
+weights = torch.stack([torch.stack([view_weights for _ in range(416)], 1) for _ in range(416)], 1)
+weights = torch.unsqueeze(weights, 0)
+leaky_weight = torch.einsum('ijklm,ijkl->ijklm', weights, leaky_output_gradient)
+lw_shape = leaky_weight.shape
+leaky_weight = leaky_weight.view(lw_shape[0], lw_shape[1], lw_shape[2], lw_shape[3], 3, 3, 3)
 
 
 def in_limit(value, limit):
