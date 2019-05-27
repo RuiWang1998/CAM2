@@ -31,6 +31,7 @@ class PreModel:
         else:
             self.module_list = list(model.children())
         for i, layer in enumerate(self.module_list):
+            layer.eval()
             self.module_list[i] = layer.to(self.device)
 
         self.layer_num = len(self.module_list)  # the number of layers of the model
