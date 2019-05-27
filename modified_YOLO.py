@@ -44,7 +44,6 @@ class YOLO(Darknet):
         if not get_grad and not jacobian:
             for i, (module_def, module) in enumerate(zip(self.module_defs, self.module_list)):
                 if module_def["type"] in ["convolutional", "upsample", "maxpool"]:
-                    module.eval()
                     x = module(x)
                 elif module_def["type"] == "route":
                     layer_i = [int(x) for x in module_def["layers"].split(",")]
@@ -54,7 +53,6 @@ class YOLO(Darknet):
                     x = layer_outputs[-1] + layer_outputs[layer_i]
                 elif module_def["type"] == "yolo":
                     # Train phase: get loss
-                    module.eval()
                     x = module(x)
                     output.append(x)
                 layer_outputs.append(x)
@@ -70,13 +68,12 @@ class YOLO(Darknet):
             assert input_index < output_index
             for i, (module_def, module) in enumerate(zip(self.module_defs, self.module_list)):
                 if i == input_index:
-                    x = x.detach().clone()  # create a new leaf variable
+                    # x = x.detach().clone()  # create a new leaf variable
                     inputs = x  # shares the same address
                     x.requires_grad = True  # this also changes inputs.requires_grad
                     # since they are pointing to the same thing
                 if i == output_index:
-                    x.mean().backward()
-                    return inputs.grad
+                    return x
                 if module_def["type"] in ["convolutional", "upsample", "maxpool"]:
                     module.eval()
                     x = module(x)

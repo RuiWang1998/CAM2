@@ -1,8 +1,10 @@
 from pprint import pprint as pp
 
+import numpy as np
 import torch
 import torch.nn as nn
 
+from YOLOSensitivity import YOLOMeasurer
 from modified_YOLO import YOLO
 
 config_path = 'YOLOv3/config/yolov3.cfg'
@@ -14,40 +16,64 @@ YOLOv3 = YOLO(config_path, image_size)
 YOLOv3.load_weights(weight_path)
 yolo_module_list = list(YOLOv3.children())[0]
 device = "cpu"  # torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-inputs = torch.randn(1, 3, image_size, image_size).to(device)
-inputs = inputs.detach()
+inputs = torch.tensor(np.loadtxt("input.csv", np.float)).view(1, 3, 416, 416).type(torch.float)
 inputs.requires_grad = True
-# measurer = YOLOMeasurer(YOLOv3, yolo_module_list, cuda=False)
-# measurer.model.eval()
-
-# layer_idx = [i for i in range(measurer.layer_num)]
-# all_outputs = measurer.model(inputs, layer_idx=layer_idx)
+measurer = YOLOMeasurer(YOLOv3, yolo_module_list, cuda=False)
+measurer.model.eval()
 #
-# outputs = all_outputs[0]
+layer_idx = [i for i in range(measurer.layer_num)]
+all_outputs = measurer.model(inputs, layer_idx=layer_idx)
 
-m = nn.Sequential(
-    nn.Conv2d(3, 32, 3, bias=False, padding=1, stride=1),
-    nn.BatchNorm2d(32),
-    nn.LeakyReLU(0.1)
+outputs = all_outputs[0]
+pp(outputs.mean())
+outputs.mean().backward()
+pp(inputs.grad.mean())
+
+outputs_2 = measurer.model.module_list[0][0](inputs)
+outputs_2 = measurer.model.module_list[0][1](outputs_2)
+outputs_2 = measurer.model.module_list[0][2](outputs_2)
+
+# m = nn.Sequential(
+#     nn.Conv2d(3, 32, 3, bias=False, padding=1, stride=1),
+#     nn.BatchNorm2d(32),
+#     nn.LeakyReLU(0.1)
+# )
+
+m = nn.Sequential()
+m.add_module(
+    "conv_%d" % 0,
+    nn.Conv2d(
+        in_channels=3,
+        out_channels=32,
+        kernel_size=3,
+        stride=1,
+        padding=1,
+        bias=False,
+    ),
 )
+m.add_module("batch_norm_%d" % 0, nn.BatchNorm2d(32))
+m.add_module("leaky_%d" % 0, nn.LeakyReLU(0.1))
 
 # m = deepcopy(list(YOLOv3.children())[0][0])
-m[0].weight = list(YOLOv3.children())[0][0][0].weight
-m[1].weight = list(YOLOv3.children())[0][0][1].weight
-m[1].bias = list(YOLOv3.children())[0][0][1].bias
+m[0].weight = measurer.model.module_list[0][0].weight
+m[1].weight = measurer.model.module_list[0][1].weight
+m[1].bias = measurer.model.module_list[0][1].bias
+bn2 = measurer.model.module_list[0][1]
+bn1 = m[1]
 m.eval()
 
-# conv_weight = list(measurer.model.children())[0][0][0].weight.type(torch.double)
-conv_weight = m[0].weight.type(torch.double)
-# bn_weight = list(measurer.model.children())[0][0][1].weight.type(torch.double)
-bn_weight = m[1].weight.type(torch.double)
+# conv_weight = list(measurer.model.children())[0][0][0].weight.type(torch.float)
+conv_weight = m[0].weight.type(torch.float)
+# bn_weight = list(measurer.model.children())[0][0][1].weight.type(torch.float)
+bn_weight = m[1].weight / torch.sqrt(m[1].running_var)
 
 outputs = m(inputs)
 YOLOv3.eval()
-new_output = list(YOLOv3.children())[0][0](inputs)
 
-outputs.mean().backward()
-bp_gradient = inputs.grad
+inputs2 = inputs.detach().clone()
+inputs2.requires_grad = True
+measurer.model.eval()
+bp_gradient = inputs2.grad
 # pp(bp_gradient)
 # pp(bn_weight)
 # pp(conv_weight)
@@ -59,11 +85,11 @@ weights = torch.unsqueeze(weights, 0)
 grads_manual = torch.zeros_like(inputs)
 padder = torch.nn.ConstantPad2d(1, 0)
 
-leaky_output_gradient = (outputs > 0).type(torch.double) * 0.9 + 0.1
-padded = padder(grads_manual.clone()).type(torch.double)
+leaky_output_gradient = (outputs > 0).type(torch.float) * 0.9 + 0.1
+padded = padder(grads_manual.clone()).type(torch.float)
 
 bned_leaky = torch.einsum("ijkl, j->ijkl", leaky_output_gradient, bn_weight)
-bned_leaky_weight = torch.einsum("ijkl, ijklmno->ijklmno", bned_leaky, weights.type(torch.double))
+bned_leaky_weight = torch.einsum("ijkl, ijklmno->ijklmno", bned_leaky, weights.type(torch.float))
 
 leaky_mean_weight = bned_leaky_weight.mean(1).permute(0, 3, 1, 2, 4, 5)
 
